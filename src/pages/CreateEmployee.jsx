@@ -6,7 +6,6 @@ import CreateEmployeeForm from '../components/dashboard/CreateEmployeeForm';
 
 function CreateEmployee({ onBack, onNavigate }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [headerSearch, setHeaderSearch] = useState('');
 
   const handleSidebarNavigate = (item) => {
     if (item.id === 'employees' && onBack) {
@@ -34,11 +33,11 @@ function CreateEmployee({ onBack, onNavigate }) {
 
       <div className="flex-1 min-w-0 flex flex-col">
         <DashboardHeader
-          showSearch
-          searchValue={headerSearch}
-          onSearchChange={setHeaderSearch}
-          searchPlaceholder="Search employees..."
-          showNotificationDot
+          breadcrumbs={[
+            { label: 'Admin' },
+            { label: 'Employees', onClick: onBack },
+            { label: 'Create Employee' },
+          ]}
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
 
