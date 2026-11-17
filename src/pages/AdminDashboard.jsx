@@ -5,9 +5,11 @@ import DashboardHeader from '../layouts/DashboardHeader';
 import StatCards from '../components/dashboard/StatCards';
 import DirectoryFilters from '../components/dashboard/DirectoryFilters';
 import EmptyState from '../components/dashboard/EmptyState';
+import CreateEmployee from './CreateEmployee';
 
 function AdminDashboard() {
   const [activeRoute, setActiveRoute] = useState('employees');
+  const [employeeView, setEmployeeView] = useState('directory');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sortBy, setSortBy] = useState('name-asc');
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +18,9 @@ function AdminDashboard() {
 
   const handleNavigate = (item) => {
     setActiveRoute(item.id);
+    if (item.id === 'employees') {
+      setEmployeeView('directory');
+    }
   };
 
   const handleClearFilters = () => {
@@ -25,9 +30,17 @@ function AdminDashboard() {
   };
 
   const handleAddEmployee = () => {
-    // Placeholder handler until employee creation modal/route is connected
-    console.log('Add Employee triggered');
+    setEmployeeView('create');
   };
+
+  if (activeRoute === 'employees' && employeeView === 'create') {
+    return (
+      <CreateEmployee
+        onBack={() => setEmployeeView('directory')}
+        onNavigate={handleNavigate}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex bg-[#F8FAFC] overflow-x-hidden">

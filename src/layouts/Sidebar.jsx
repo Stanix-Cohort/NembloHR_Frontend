@@ -109,30 +109,37 @@ function Sidebar({
           </span>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="px-4 flex-1 space-y-1.5">
+{/* Navigation Links */}
+        <nav className="flex-1 space-y-1.5">
           {NAV_ITEMS.map((item) => {
             const { id, label, path, Icon } = item;
             const isActive = activeRoute === id;
 
             return (
-              <a
-                key={id}
-                href={path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleNavClick(item);
-                }}
-                aria-current={isActive ? 'page' : undefined}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[8px] text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-                  isActive
-                    ? 'bg-[#7A8896] text-white'
-                    : 'text-[#E2E8F0] hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
-                <span>{label}</span>
-              </a>
+              <div key={id} className="relative px-4">
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[4px] h-[22px] rounded-r-full bg-[#E8EEF5]"
+                  />
+                )}
+                <a
+                  href={path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(item);
+                  }}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[8px] text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                    isActive
+                      ? 'bg-[#7A8896] text-white'
+                      : 'text-[#E2E8F0] hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+                  <span>{label}</span>
+                </a>
+              </div>
             );
           })}
         </nav>
