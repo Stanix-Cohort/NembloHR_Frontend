@@ -1,10 +1,12 @@
 import WelcomePanel from '../components/auth/WelcomePanel';
 import LoginForm from '../components/auth/LoginForm';
 
-function AdminLogin() {
+function AdminLogin({ onLoginSuccess }) {
   const handleLogin = (credentials) => {
-    // Placeholder handler for authentication
     console.log('Admin login submitted:', credentials);
+    if (onLoginSuccess) {
+      onLoginSuccess(credentials);
+    }
   };
 
   return (
