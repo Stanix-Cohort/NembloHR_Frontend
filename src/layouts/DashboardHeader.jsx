@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, Menu, Search } from 'lucide-react';
+import { Bell, ChevronRight, Menu } from 'lucide-react';
 
 function HeaderAvatar() {
   return (
@@ -24,17 +24,18 @@ function HeaderAvatar() {
 
 function DashboardHeader({
   sectionLabel = 'Employees',
+  breadcrumbs,
   onOpenMobileNav,
-  showSearch = false,
-  searchValue = '',
-  onSearchChange,
-  searchPlaceholder = 'Search employees...',
-  showNotificationDot = false,
 }) {
+  const items = breadcrumbs ?? [
+    { label: 'Admin' },
+    { label: sectionLabel },
+  ];
+
   return (
     <header className="h-[64px] bg-white border-b border-[#E5E7EB] px-4 sm:px-6 lg:px-9 flex items-center justify-between gap-4 shrink-0">
-      {/* Left: Mobile Menu Trigger + Breadcrumb or Search */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      {/* Left: Mobile Menu Trigger + Breadcrumb */}
+      <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={onOpenMobileNav}
@@ -44,33 +45,44 @@ function DashboardHeader({
           <Menu className="w-5 h-5" />
         </button>
 
-        {showSearch ? (
-          <div className="relative w-full max-w-[560px]">
-            <Search
-              className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
-              className="w-full h-[38px] pl-10 pr-4 bg-white border border-[#E2E8F0] rounded-[8px] text-[13px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#1E3247]/20 focus:border-[#1E3247]"
-            />
-          </div>
-        ) : (
-          <nav aria-label="Breadcrumb" className="flex items-center text-[14px]">
-            <span className="text-[#64748B] font-normal">Admin</span>
-            <ChevronRight
-              className="w-4 h-4 text-[#64748B] mx-2"
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-            <span className="text-[#0F172A] font-medium">{sectionLabel}</span>
-          </nav>
-        )}
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center text-[14px] whitespace-nowrap overflow-x-auto"
+        >
+          {items.map((item, index) => {
+            const isLast = index === items.length - 1;
+
+            return (
+              <div key={item.label} className="flex items-center">
+                {index > 0 && (
+                  <ChevronRight
+                    className="w-4 h-4 text-[#64748B] mx-2 shrink-0"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                )}
+
+                {isLast ? (
+                  <span className="text-[#0F172A] font-medium">
+                    {item.label}
+                  </span>
+                ) : item.onClick ? (
+                  <button
+                    type="button"
+                    onClick={item.onClick}
+                    className="text-[#64748B] hover:text-[#0F172A] font-normal cursor-pointer focus:outline-none focus-visible:underline"
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <span className="text-[#64748B] font-normal">
+                    {item.label}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Right: Notifications & Profile */}
@@ -78,15 +90,9 @@ function DashboardHeader({
         <button
           type="button"
           aria-label="Notifications"
-          className="relative p-1.5 rounded-[8px] text-[#1E293B] hover:bg-[#F1F5F9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30 cursor-pointer"
+          className="p-1.5 rounded-[8px] text-[#1E293B] hover:bg-[#F1F5F9] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30 cursor-pointer"
         >
           <Bell className="w-[18px] h-[18px]" strokeWidth={1.75} />
-          {showNotificationDot && (
-            <span
-              aria-hidden="true"
-              className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#EF4444]"
-            />
-          )}
         </button>
 
         <button
