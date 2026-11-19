@@ -2,7 +2,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import CreateEmployee from "./pages/CreateEmployee";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import EditEmployee from "./pages/EditEmployee";
 
 function App() {
   return (
@@ -13,6 +15,9 @@ function App() {
       {/* Protected Admin routes */}
       <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
         <Route path="/admin/employees" element={<AdminDashboard />} />
+        <Route path="/admin/employees/new" element={<CreateEmployee />} />
+        <Route path="/admin/employees/new" element={<CreateEmployee />} />
+        <Route path="/admin/employees/:id/edit" element={<EditEmployee />} />
 
         <Route
           path="/dashboard"
@@ -45,7 +50,6 @@ function App() {
 
       {/* Default route */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

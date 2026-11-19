@@ -1,15 +1,22 @@
-import { Contact, Users, CalendarCheck, Briefcase, X } from 'lucide-react';
+import {
+  Contact,
+  Users,
+  CalendarCheck,
+  Briefcase,
+  LogOut,
+  X,
+} from "lucide-react";
 
 const NAV_ITEMS = [
-  { id: 'employees', label: 'Employees', path: '/admin/employees', Icon: Contact },
-  { id: 'attendance', label: 'Attendance', path: '/admin/attendance', Icon: Users },
+  { id: "employees", label: "Employees", path: "/admin/employees", Icon: Contact },
+  { id: "attendance", label: "Attendance", path: "/admin/attendance", Icon: Users },
   {
-    id: 'leave-management',
-    label: 'Leave Management',
-    path: '/admin/leave-management',
+    id: "leave-management",
+    label: "Leave Management",
+    path: "/admin/leave-management",
     Icon: CalendarCheck,
   },
-  { id: 'assets', label: 'Assets', path: '/admin/assets', Icon: Briefcase },
+  { id: "assets", label: "Assets", path: "/admin/assets", Icon: Briefcase },
 ];
 
 function AdminAvatar() {
@@ -35,11 +42,17 @@ function AdminAvatar() {
 }
 
 function Sidebar({
-  activeRoute = 'employees',
+  activeRoute = "employees",
   onNavigate,
+  onLogout,
+  user,
   mobileOpen = false,
   onCloseMobile,
 }) {
+  const displayName = user?.fullName || user?.username || "Admin User";
+  const displayRole =
+    user?.role === "ADMIN" ? "Administrator" : user?.role || "Administrator";
+
   const handleNavClick = (item) => {
     if (onNavigate) {
       onNavigate(item);
@@ -63,7 +76,7 @@ function Sidebar({
       <aside
         aria-label="Admin Portal Navigation"
         className={`fixed inset-y-0 left-0 z-40 w-[260px] bg-[#1E3247] text-white flex flex-col shrink-0 transition-transform duration-200 lg:static lg:translate-x-0 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Top Brand Bar */}
@@ -109,7 +122,7 @@ function Sidebar({
           </span>
         </div>
 
-{/* Navigation Links */}
+        {/* Navigation Links */}
         <nav className="flex-1 space-y-1.5">
           {NAV_ITEMS.map((item) => {
             const { id, label, path, Icon } = item;
@@ -129,11 +142,11 @@ function Sidebar({
                     e.preventDefault();
                     handleNavClick(item);
                   }}
-                  aria-current={isActive ? 'page' : undefined}
+                  aria-current={isActive ? "page" : undefined}
                   className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[8px] text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                     isActive
-                      ? 'bg-[#7A8896] text-white'
-                      : 'text-[#E2E8F0] hover:bg-white/10 hover:text-white'
+                      ? "bg-[#7A8896] text-white"
+                      : "text-[#E2E8F0] hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
@@ -144,19 +157,30 @@ function Sidebar({
           })}
         </nav>
 
-        {/* Bottom Profile Card */}
-        <div className="p-4 mt-auto">
+        {/* Bottom Profile Card & Logout */}
+        <div className="p-4 mt-auto space-y-3">
           <div className="rounded-[10px] border border-white/15 bg-white/[0.06] px-3.5 py-3 flex items-center gap-3">
             <AdminAvatar />
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-white leading-tight truncate">
-                Admin User
+                {displayName}
               </p>
               <p className="text-[10px] text-[#CBD5E1] leading-tight mt-0.5 truncate">
-                Administrator
+                {displayRole}
               </p>
             </div>
           </div>
+
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-full px-2 py-1.5 flex items-center gap-2.5 text-[14px] font-medium text-[#F87171] hover:text-[#FCA5A5] rounded-[8px] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F87171]/40"
+            >
+              <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />
+              <span>Logout</span>
+            </button>
+          )}
         </div>
       </aside>
     </>
