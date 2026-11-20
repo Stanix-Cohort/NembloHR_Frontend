@@ -5,7 +5,11 @@ import Sidebar from "../layouts/Sidebar";
 import DashboardHeader from "../layouts/DashboardHeader";
 import EditEmployeeForm from "../components/dashboard/EditEmployeeForm";
 import { useAuth } from "../context/auth-context";
-import { getDepartments, getEmployeeById } from "../services/employeeService";
+import {
+  getDepartments,
+  getEmployeeById,
+  updateEmployee,
+} from "../services/employeeService";
 import { getApiErrorMessage } from "../utils/apiError";
 
 function EditEmployee() {
@@ -25,6 +29,9 @@ function EditEmployee() {
 
   const [departments, setDepartments] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -82,9 +89,28 @@ function EditEmployee() {
     navigate("/login", { replace: true });
   };
 
-  const handleSaveChanges = (payload) => {
-    // Ready to wire to PATCH /employees/:id once the backend endpoint is confirmed
-    console.log("Edit employee payload:", { id, ...payload });
+  const handleSaveChanges = async (payload) => {
+    if (Object.keys(payload).length === 0) {
+      navigate("/admin/employees");
+      return;
+    }
+
+    setSaveError("");
+    setIsSubmitting(true);
+
+    try {
+      await updateEmployee(id, payload);
+      navigate("/admin/employees");
+    } catch (err) {
+      setSaveError(
+        getApiErrorMessage(
+          err,
+          "Unable to update employee. Please check your input and try again.",
+        ),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -154,6 +180,8 @@ function EditEmployee() {
                   employee={employee}
                   departments={departments}
                   departmentsLoading={departmentsLoading}
+                  isSubmitting={isSubmitting}
+                  serverError={saveError}
                   onCancel={handleBack}
                   onSubmit={handleSaveChanges}
                 />

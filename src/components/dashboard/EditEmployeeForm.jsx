@@ -115,7 +115,7 @@ function EditEmployeeForm({
     return nextErrors;
   };
 
-  const handleSubmit = (event) => {
+const handleSubmit = (event) => {
     event.preventDefault();
     if (isSubmitting) return;
 
@@ -125,13 +125,39 @@ function EditEmployeeForm({
       return;
     }
 
-    const payload = {
-      fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim(),
-      workEmail: formData.email.trim(),
-      phone: formData.phone.trim(),
-      departmentId: formData.departmentId,
-      jobTitle: formData.jobTitle,
-    };
+    const initialValues = buildInitialState(employee);
+    const nextFullName =
+      `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
+    const initialFullName =
+      `${initialValues.firstName.trim()} ${initialValues.lastName.trim()}`.trim();
+
+    const payload = {};
+
+    if (nextFullName !== initialFullName) {
+      payload.fullName = nextFullName;
+    }
+
+    if (formData.email.trim() !== initialValues.email.trim()) {
+      payload.workEmail = formData.email.trim();
+    }
+
+    if (formData.phone.trim() !== initialValues.phone.trim()) {
+      if (formData.phone.trim()) {
+        payload.phone = formData.phone.trim();
+      }
+    }
+
+    if (formData.departmentId !== initialValues.departmentId) {
+      if (formData.departmentId) {
+        payload.departmentId = formData.departmentId;
+      }
+    }
+
+    if (formData.jobTitle.trim() !== initialValues.jobTitle.trim()) {
+      if (formData.jobTitle.trim()) {
+        payload.jobTitle = formData.jobTitle.trim();
+      }
+    }
 
     if (onSubmit) {
       onSubmit(payload);

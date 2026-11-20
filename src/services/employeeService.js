@@ -38,3 +38,12 @@ export async function createEmployee(employeePayload) {
   const response = await apiClient.post("/employees", employeePayload);
   return response.data?.data ?? response.data;
 }
+
+export async function updateEmployee(employeeId, employeePayload) {
+  const response = await apiClient.patch(
+    `/employees/${employeeId}`,
+    employeePayload,
+  );
+  const payload = response.data?.data ?? response.data;
+  return payload?.employee ?? payload;
+}
