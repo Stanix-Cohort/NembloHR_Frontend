@@ -47,3 +47,11 @@ export async function updateEmployee(employeeId, employeePayload) {
   const payload = response.data?.data ?? response.data;
   return payload?.employee ?? payload;
 }
+
+export async function updateEmployeeStatus(employeeId, employmentStatus) {
+  const response = await apiClient.patch(`/employees/${employeeId}/status`, {
+    employmentStatus,
+  });
+  const payload = response.data?.data ?? response.data;
+  return payload?.employee ?? payload;
+}

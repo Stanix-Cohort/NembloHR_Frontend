@@ -9,7 +9,11 @@ import EmptyState from "../components/dashboard/EmptyState";
 import EmployeeTable from "../components/dashboard/EmployeeTable";
 import DeactivateAccountModal from "../components/dashboard/DeactivateAccountModal";
 import { useAuth } from "../context/auth-context";
-import { getDepartments, getEmployees } from "../services/employeeService";
+import {
+  getDepartments,
+  getEmployees,
+  updateEmployeeStatus,
+} from "../services/employeeService";
 import { getApiErrorMessage } from "../utils/apiError";
 
 const PAGE_SIZE = 7;
@@ -68,14 +72,15 @@ function AdminDashboard() {
         limit: PAGE_SIZE,
       });
 
-      console.log("GET /employees response:", data);
-
       const list = Array.isArray(data)
         ? data
         : data?.employees ?? data?.items ?? data?.records ?? [];
 
       const activeFromList = list.filter(
-        (emp) => String(emp.status || "active").toLowerCase() === "active",
+        (emp) =>
+          String(
+            emp.employmentStatus ?? emp.status ?? "active",
+          ).toLowerCase() === "active",
       ).length;
       const inactiveFromList = list.length - activeFromList;
 
@@ -151,9 +156,9 @@ function AdminDashboard() {
     setIsDeactivating(true);
 
     try {
-      // Ready to connect to the backend deactivate endpoint once confirmed
-      console.log("Deactivate employee:", employee.id);
+      await updateEmployeeStatus(employee.id, "INACTIVE");
       setEmployeeToDeactivate(null);
+      await fetchDirectory();
     } catch (err) {
       setDeactivateError(
         getApiErrorMessage(err, "Unable to deactivate employee account."),
@@ -161,6 +166,30 @@ function AdminDashboard() {
     } finally {
       setIsDeactivating(false);
     }
+  };
+
+  const handleToggleStatus = async (employee) => {
+    const currentStatus = String(
+      employee.employmentStatus ??
+        employee.status ??
+        (employee.isActive === false ? "inactive" : "active"),
+    ).toLowerCase();
+
+    if (currentStatus === "inactive" || currentStatus === "deactivated") {
+      setError("");
+      try {
+        await updateEmployeeStatus(employee.id, "ACTIVE");
+        await fetchDirectory();
+      } catch (err) {
+        setError(
+          getApiErrorMessage(err, "Unable to reactivate employee account."),
+        );
+      }
+      return;
+    }
+
+    setDeactivateError("");
+    setEmployeeToDeactivate(employee);
   };
 
   return (
@@ -301,10 +330,7 @@ function AdminDashboard() {
                       state: { employee },
                     })
                   }
-                  onToggleStatus={(employee) => {
-                    setDeactivateError("");
-                    setEmployeeToDeactivate(employee);
-                  }}
+                  onToggleStatus={handleToggleStatus}
                 />
               )}
             </div>

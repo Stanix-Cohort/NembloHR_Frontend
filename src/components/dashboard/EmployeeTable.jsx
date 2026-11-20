@@ -132,7 +132,8 @@ function EmployeeTable({
 
   const activeMenuEmployee = openMenu?.employee;
   const activeMenuStatus = String(
-    activeMenuEmployee?.status ||
+    activeMenuEmployee?.employmentStatus ??
+      activeMenuEmployee?.status ??
       (activeMenuEmployee?.isActive === false ? "inactive" : "active"),
   ).toLowerCase();
   const isActiveMenuInactive =
@@ -166,7 +167,8 @@ function EmployeeTable({
                 employee.department?.name || employee.departmentName || "—";
               const jobTitle = employee.jobTitle || "—";
               const status =
-                employee.status ||
+                employee.employmentStatus ??
+                employee.status ??
                 (employee.isActive === false ? "inactive" : "active");
               const dateAdded = formatDate(
                 employee.createdAt || employee.startDate,
@@ -228,7 +230,7 @@ function EmployeeTable({
         </table>
       </div>
 
-      {/* Action Dropdown Portal/Fixed Menu */}
+      {/* Action Dropdown Menu */}
       {openMenu && (
         <div
           ref={menuRef}
