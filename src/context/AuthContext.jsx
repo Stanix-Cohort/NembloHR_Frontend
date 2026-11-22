@@ -22,6 +22,7 @@ function refreshSession() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
+  const [pendingPassword, setPendingPassword] = useState("");
   const [isInitializing, setIsInitializing] = useState(true);
 
   const isAuthenticated = Boolean(user && accessToken);
@@ -39,6 +40,7 @@ export function AuthProvider({ children }) {
   const clearAuth = useCallback(() => {
     updateAccessToken(null);
     setUser(null);
+    setPendingPassword("");
   }, [updateAccessToken]);
 
   // Restore an existing session when the application starts.
@@ -95,10 +97,42 @@ export function AuthProvider({ children }) {
 
       updateAccessToken(token);
       setUser(authenticatedUser);
+      setPendingPassword(
+        authenticatedUser?.mustChangePassword ? password : "",
+      );
 
       return authenticatedUser;
     },
     [updateAccessToken],
+  );
+
+  // Update password on first login using the in-memory login password (or fallback input).
+  const changePassword = useCallback(
+    async ({ currentPassword, newPassword, confirmPassword }) => {
+      const resolvedCurrentPassword = currentPassword || pendingPassword;
+
+      await apiClient.post("/auth/change-password", {
+        currentPassword: resolvedCurrentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      setPendingPassword("");
+
+      try {
+        const response = await apiClient.get("/auth/me");
+        const updatedUser = response.data.data.user;
+        setUser(updatedUser);
+        return updatedUser;
+      } catch {
+        const fallbackUser = user
+          ? { ...user, mustChangePassword: false }
+          : null;
+        setUser(fallbackUser);
+        return fallbackUser;
+      }
+    },
+    [pendingPassword, user],
   );
 
   // Revoke the session and clear local authentication state.
@@ -115,7 +149,9 @@ export function AuthProvider({ children }) {
     accessToken,
     isAuthenticated,
     isInitializing,
+    hasPendingPassword: Boolean(pendingPassword),
     login,
+    changePassword,
     logout,
   };
 

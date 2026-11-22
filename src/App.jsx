@@ -5,6 +5,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import CreateEmployee from "./pages/CreateEmployee";
 import EditEmployee from "./pages/EditEmployee";
 import ChangePassword from "./pages/ChangePassword";
+import EmployeePortal from "./pages/EmployeePortal";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
@@ -23,6 +24,11 @@ function App() {
           path="/dashboard"
           element={<Navigate to="/admin/employees" replace />}
         />
+      </Route>
+
+      {/* Protected Employee routes */}
+      <Route element={<ProtectedRoute allowedRoles={["EMPLOYEE"]} />}>
+        <Route path="/employee/dashboard" element={<EmployeePortal />} />
       </Route>
 
       {/* First-login password change */}

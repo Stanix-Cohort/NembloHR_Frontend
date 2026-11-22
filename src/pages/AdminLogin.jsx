@@ -24,12 +24,17 @@ function AdminLogin() {
         return;
       }
 
-      if (user.role !== "ADMIN") {
-        navigate("/unauthorized", { replace: true });
+      if (user.role === "ADMIN") {
+        navigate("/admin/employees", { replace: true });
         return;
       }
 
-      navigate("/admin/employees", { replace: true });
+      if (user.role === "EMPLOYEE") {
+        navigate("/employee/dashboard", { replace: true });
+        return;
+      }
+
+      navigate("/unauthorized", { replace: true });
     } catch (err) {
       const message =
         err.response?.data?.message ||
