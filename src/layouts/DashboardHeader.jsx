@@ -71,12 +71,16 @@ function DashboardHeader({
     { label: sectionLabel },
   ];
 
+  const defaultName =
+    activeUser?.role === "EMPLOYEE" ? "User" : "Admin User";
   const displayName =
-    activeUser?.fullName || activeUser?.username || "Admin User";
+    activeUser?.fullName || activeUser?.username || defaultName;
   const displayRole =
     activeUser?.role === "ADMIN"
       ? "Administrator"
-      : activeUser?.role || "Administrator";
+      : activeUser?.role === "EMPLOYEE"
+        ? "Employee"
+        : activeUser?.role || "Administrator";
 
   const handleEditProfile = () => {
     setIsProfileOpen(false);

@@ -5,6 +5,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import CreateEmployee from "./pages/CreateEmployee";
 import EditEmployee from "./pages/EditEmployee";
 import ChangePassword from "./pages/ChangePassword";
+import EmployeeAssets from "./pages/EmployeeAssets";
 import EmployeePortal from "./pages/EmployeePortal";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -28,7 +29,37 @@ function App() {
 
       {/* Protected Employee routes */}
       <Route element={<ProtectedRoute allowedRoles={["EMPLOYEE"]} />}>
-        <Route path="/employee/dashboard" element={<EmployeePortal />} />
+        <Route path="/employee/assets" element={<EmployeeAssets />} />
+        <Route
+          path="/employee/dashboard"
+          element={
+            <EmployeePortal
+              activeRoute="home"
+              sectionLabel="Home"
+              pageTitle="Home"
+            />
+          }
+        />
+        <Route
+          path="/employee/attendance"
+          element={
+            <EmployeePortal
+              activeRoute="attendance"
+              sectionLabel="Attendance"
+              pageTitle="Attendance"
+            />
+          }
+        />
+        <Route
+          path="/employee/leave-management"
+          element={
+            <EmployeePortal
+              activeRoute="leave-management"
+              sectionLabel="Leave Management"
+              pageTitle="Leave Management"
+            />
+          }
+        />
       </Route>
 
       {/* First-login password change */}

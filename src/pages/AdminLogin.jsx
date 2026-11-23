@@ -30,7 +30,7 @@ function AdminLogin() {
       }
 
       if (user.role === "EMPLOYEE") {
-        navigate("/employee/dashboard", { replace: true });
+        navigate("/employee/assets", { replace: true });
         return;
       }
 

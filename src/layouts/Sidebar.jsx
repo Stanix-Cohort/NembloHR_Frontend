@@ -42,6 +42,8 @@ function AdminAvatar() {
 }
 
 function Sidebar({
+  portalLabel = "Admin Portal",
+  navItems = NAV_ITEMS,
   activeRoute = "employees",
   onNavigate,
   onLogout,
@@ -49,9 +51,14 @@ function Sidebar({
   mobileOpen = false,
   onCloseMobile,
 }) {
-  const displayName = user?.fullName || user?.username || "Admin User";
+  const defaultName = user?.role === "EMPLOYEE" ? "User" : "Admin User";
+  const displayName = user?.fullName || user?.username || defaultName;
   const displayRole =
-    user?.role === "ADMIN" ? "Administrator" : user?.role || "Administrator";
+    user?.role === "ADMIN"
+      ? "Administrator"
+      : user?.role === "EMPLOYEE"
+        ? "Employee"
+        : user?.role || "Administrator";
 
   const handleNavClick = (item) => {
     if (onNavigate) {
@@ -74,7 +81,7 @@ function Sidebar({
       )}
 
       <aside
-        aria-label="Admin Portal Navigation"
+        aria-label={`${portalLabel} Navigation`}
         className={`fixed inset-y-0 left-0 z-40 w-[260px] bg-[#1E3247] text-white flex flex-col shrink-0 transition-transform duration-200 lg:static lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -118,13 +125,13 @@ function Sidebar({
         {/* Section Heading */}
         <div className="px-6 mt-5 mb-2.5">
           <span className="text-[13px] font-medium text-[#CBD5E1]">
-            Admin Portal
+            {portalLabel}
           </span>
         </div>
 
         {/* Navigation Links */}
         <nav className="flex-1 space-y-1.5">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const { id, label, path, Icon } = item;
             const isActive = activeRoute === id;
 
