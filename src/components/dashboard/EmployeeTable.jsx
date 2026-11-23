@@ -126,9 +126,15 @@ function EmployeeTable({
   };
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
-  const pages = buildPageNumbers(currentPage, totalPages);
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startItem = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const endItem = Math.min(safePage * pageSize, totalItems);
+  const pages = buildPageNumbers(safePage, totalPages);
+
+  const visibleEmployees =
+    employees.length > pageSize
+      ? employees.slice((safePage - 1) * pageSize, safePage * pageSize)
+      : employees;
 
   const activeMenuEmployee = openMenu?.employee;
   const activeMenuStatus = String(
@@ -156,7 +162,7 @@ function EmployeeTable({
           </thead>
 
           <tbody>
-            {employees.map((employee, index) => {
+            {visibleEmployees.map((employee, index) => {
               const name =
                 employee.fullName ||
                 `${employee.firstName || ""} ${employee.lastName || ""}`.trim() ||
@@ -286,8 +292,8 @@ function EmployeeTable({
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            disabled={currentPage <= 1}
-            onClick={() => onPageChange && onPageChange(currentPage - 1)}
+            disabled={safePage <= 1}
+            onClick={() => onPageChange && onPageChange(safePage - 1)}
             aria-label="Previous page"
             className="w-8 h-8 rounded-[6px] border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] flex items-center justify-center text-[#334155] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
@@ -308,7 +314,7 @@ function EmployeeTable({
                 type="button"
                 onClick={() => onPageChange && onPageChange(page)}
                 className={`w-8 h-8 rounded-[6px] text-[13px] font-medium flex items-center justify-center cursor-pointer ${
-                  page === currentPage
+                  page === safePage
                     ? "bg-[#1E3247] text-white"
                     : "border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#334155]"
                 }`}
@@ -320,8 +326,8 @@ function EmployeeTable({
 
           <button
             type="button"
-            disabled={currentPage >= totalPages}
-            onClick={() => onPageChange && onPageChange(currentPage + 1)}
+            disabled={safePage >= totalPages}
+            onClick={() => onPageChange && onPageChange(safePage + 1)}
             aria-label="Next page"
             className="w-8 h-8 rounded-[6px] border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] flex items-center justify-center text-[#334155] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
