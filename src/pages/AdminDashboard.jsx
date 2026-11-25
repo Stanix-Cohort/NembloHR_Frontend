@@ -196,7 +196,13 @@ function AdminDashboard() {
     <div className="min-h-screen w-full flex bg-[#F8FAFC] overflow-x-hidden">
       <Sidebar
         activeRoute={activeRoute}
-        onNavigate={(item) => setActiveRoute(item.id)}
+        onNavigate={(item) => {
+          if (item.id === "employees" || item.id === "assets") {
+            navigate(item.path);
+            return;
+          }
+          setActiveRoute(item.id);
+        }}
         onLogout={handleLogout}
         user={user}
         mobileOpen={mobileNavOpen}

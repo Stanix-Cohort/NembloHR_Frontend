@@ -8,6 +8,8 @@ import ChangePassword from "./pages/ChangePassword";
 import EmployeeAssets from "./pages/EmployeeAssets";
 import EmployeePortal from "./pages/EmployeePortal";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminAssets from "./pages/AdminAssets";
+import CreateAsset from "./pages/CreateAsset";
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
         <Route path="/admin/employees" element={<AdminDashboard />} />
         <Route path="/admin/employees/new" element={<CreateEmployee />} />
         <Route path="/admin/employees/:id/edit" element={<EditEmployee />} />
+        <Route path="/admin/assets" element={<AdminAssets />} />
+        <Route path="/admin/assets/new" element={<CreateAsset />} />
 
         <Route
           path="/dashboard"

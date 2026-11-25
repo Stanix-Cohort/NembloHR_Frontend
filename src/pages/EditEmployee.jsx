@@ -118,7 +118,9 @@ function EditEmployee() {
       <Sidebar
         activeRoute="employees"
         onNavigate={(item) => {
-          if (item.id === "employees") handleBack();
+          if (item.id === "employees" || item.id === "assets") {
+            navigate(item.path);
+          }
         }}
         onLogout={handleLogout}
         user={user}

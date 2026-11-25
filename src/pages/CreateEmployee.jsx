@@ -67,8 +67,8 @@ function CreateEmployee() {
   };
 
   const handleSidebarNavigate = (item) => {
-    if (item.id === "employees") {
-      navigate("/admin/employees");
+    if (item.id === "employees" || item.id === "assets") {
+      navigate(item.path);
     }
   };
 
