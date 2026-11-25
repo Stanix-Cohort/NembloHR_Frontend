@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, LoaderCircle } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  ImagePlus,
+  LoaderCircle,
+  X,
+} from "lucide-react";
 import AssetTypeSelect from "./AssetTypeSelect";
 
 const CONDITION_OPTIONS = [
@@ -21,8 +28,37 @@ const INITIAL_FORM_STATE = {
   serialNumber: "",
   condition: "",
   status: "",
+  dateAcquired: "",
   employeeId: "",
 };
+
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
+
+function toIsoDate(displayValue = "") {
+  const match = displayValue.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return "";
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return "";
+  }
+
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
+function toDisplayDate(isoValue = "") {
+  const match = isoValue.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "";
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
 
 function OptionSelect({
   id,
@@ -155,6 +191,20 @@ function CreateAssetForm({
 }) {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [errors, setErrors] = useState({});
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+
+  const imageInputRef = useRef(null);
+  const previewUrlRef = useRef("");
+  const datePickerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
 
   const clearFieldError = (field) => {
     setErrors((prev) => {
@@ -186,6 +236,53 @@ function CreateAssetForm({
   const handleAssetTypeSelect = (typeId) => {
     if (onAssetTypeChange) onAssetTypeChange(typeId);
     clearFieldError("assetTypeId");
+  };
+
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        image: "Please upload a JPG or PNG image.",
+      }));
+      event.target.value = "";
+      return;
+    }
+
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+    }
+
+    const nextPreview = URL.createObjectURL(file);
+    previewUrlRef.current = nextPreview;
+    setImageFile(file);
+    setImagePreview(nextPreview);
+    clearFieldError("image");
+  };
+
+  const handleRemoveImage = (event) => {
+    event.stopPropagation();
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
+    }
+    setImageFile(null);
+    setImagePreview("");
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+    clearFieldError("image");
+  };
+
+  const handleOpenDatePicker = () => {
+    if (isSubmitting) return;
+    if (datePickerRef.current?.showPicker) {
+      datePickerRef.current.showPicker();
+    } else {
+      datePickerRef.current?.click();
+    }
   };
 
   const isAssigned = formData.status === "ASSIGNED";
@@ -222,6 +319,13 @@ function CreateAssetForm({
       nextErrors.status = "Status is required.";
     }
 
+    if (
+      formData.dateAcquired.trim() &&
+      !toIsoDate(formData.dateAcquired.trim())
+    ) {
+      nextErrors.dateAcquired = "Enter a valid date in DD/MM/YYYY format.";
+    }
+
     if (isAssigned && !formData.employeeId) {
       nextErrors.employeeId = "Please select an employee.";
     }
@@ -239,12 +343,18 @@ function CreateAssetForm({
       return;
     }
 
+    const isoDateAcquired = formData.dateAcquired.trim()
+      ? toIsoDate(formData.dateAcquired.trim())
+      : "";
+
     const payload = {
       assetCode: formData.assetId.trim(),
       assetTypeId: selectedAssetTypeId,
       serialNumber: formData.serialNumber.trim(),
       condition: formData.condition,
       status: formData.status,
+      ...(isoDateAcquired ? { dateAcquired: isoDateAcquired } : {}),
+      ...(imageFile ? { image: imageFile } : {}),
       ...(isAssigned && formData.employeeId
         ? { assignedToEmployeeId: formData.employeeId }
         : {}),
@@ -255,6 +365,15 @@ function CreateAssetForm({
         resetForm: () => {
           setFormData(INITIAL_FORM_STATE);
           setErrors({});
+          if (previewUrlRef.current) {
+            URL.revokeObjectURL(previewUrlRef.current);
+            previewUrlRef.current = "";
+          }
+          setImageFile(null);
+          setImagePreview("");
+          if (imageInputRef.current) {
+            imageInputRef.current.value = "";
+          }
           if (onAssetTypeChange) onAssetTypeChange("");
         },
       });
@@ -293,7 +412,80 @@ function CreateAssetForm({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+      {/* Asset Image Upload */}
+      <div>
+        <h2 className="text-[14px] font-bold text-[#0F172A] leading-snug">
+          Asset Image
+        </h2>
+        <p className="mt-0.5 text-[12px] text-[#64748B]">
+          Upload a photograph of the company asset.
+        </p>
+
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/png,image/jpeg"
+          onChange={handleImageSelect}
+          disabled={isSubmitting}
+          className="hidden"
+          aria-label="Upload asset image"
+        />
+
+        <div className="mt-3">
+          {imagePreview ? (
+            <div className="relative w-[190px] h-[146px] rounded-[12px] border border-[#CBD5E1] bg-[#F8FAFC] overflow-hidden group">
+              <img
+                src={imagePreview}
+                alt="Selected asset preview"
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isSubmitting}
+                className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center text-white text-[12px] font-medium opacity-0 group-hover:opacity-100 cursor-pointer"
+              >
+                Change Image
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                disabled={isSubmitting}
+                aria-label="Remove uploaded image"
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white border border-[#CBD5E1] text-[#0F172A] hover:text-[#DC2626] flex items-center justify-center shadow-xs cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" strokeWidth={2} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={isSubmitting}
+              className="w-[190px] h-[146px] rounded-[12px] border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] flex flex-col items-center justify-center text-center px-4 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <ImagePlus
+                className="w-6 h-6 text-[#1E293B]"
+                strokeWidth={1.6}
+                aria-hidden="true"
+              />
+              <span className="mt-2.5 text-[14px] font-semibold text-[#0F172A]">
+                Upload Image
+              </span>
+              <span className="mt-0.5 text-[12px] text-[#64748B]">
+                JPG or PNG
+              </span>
+            </button>
+          )}
+        </div>
+
+        {errors.image && (
+          <p className="mt-1.5 text-[12px] text-[#DC2626]">{errors.image}</p>
+        )}
+      </div>
+
+      {/* Form Grid */}
+      <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         {/* Asset ID */}
         <div>
           <label
@@ -416,6 +608,59 @@ function CreateAssetForm({
           )}
         </div>
 
+        {/* Date Acquired */}
+        <div>
+          <label
+            htmlFor="dateAcquired"
+            className="block text-[14px] font-medium text-[#0F172A] mb-2"
+          >
+            Date Acquired
+          </label>
+          <div className="relative">
+            <input
+              id="dateAcquired"
+              name="dateAcquired"
+              type="text"
+              inputMode="numeric"
+              value={formData.dateAcquired}
+              onChange={handleInputChange("dateAcquired")}
+              placeholder="DD/MM/YYYY"
+              disabled={isSubmitting}
+              aria-invalid={Boolean(errors.dateAcquired)}
+              className={`${getInputClasses(Boolean(errors.dateAcquired))} pr-11`}
+            />
+
+            <input
+              ref={datePickerRef}
+              type="date"
+              tabIndex={-1}
+              aria-hidden="true"
+              value={toIsoDate(formData.dateAcquired)}
+              onChange={(e) => {
+                const formatted = toDisplayDate(e.target.value);
+                setFormData((prev) => ({ ...prev, dateAcquired: formatted }));
+                clearFieldError("dateAcquired");
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 opacity-0 pointer-events-none"
+            />
+
+            <button
+              type="button"
+              onClick={handleOpenDatePicker}
+              disabled={isSubmitting}
+              aria-label="Open calendar to pick date acquired"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0F172A] cursor-pointer focus:outline-none disabled:opacity-50"
+            >
+              <Calendar className="w-[18px] h-[18px]" strokeWidth={1.75} />
+            </button>
+          </div>
+          {errors.dateAcquired && (
+            <p className="mt-1.5 text-[12px] text-[#DC2626]">
+              {errors.dateAcquired}
+            </p>
+          )}
+        </div>
+
         {/* Select Employee (shown when Status is Assigned) */}
         {isAssigned && (
           <div>
@@ -447,7 +692,7 @@ function CreateAssetForm({
       </div>
 
       {/* Form Actions */}
-      <div className="mt-12 sm:mt-16 flex items-center justify-end gap-3.5">
+      <div className="mt-10 sm:mt-12 flex items-center justify-end gap-3.5">
         <button
           type="button"
           onClick={onCancel}
