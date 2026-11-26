@@ -1,26 +1,107 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { LoaderCircle, Plus } from "lucide-react";
 import Sidebar from "../layouts/Sidebar";
 import DashboardHeader from "../layouts/DashboardHeader";
 import AssetStatCards from "../components/assets/AssetStatCards";
 import AssetFilters from "../components/assets/AssetFilters";
 import AdminAssetsEmptyState from "../components/assets/AdminAssetsEmptyState";
+import AssetTable from "../components/assets/AssetTable";
 import { useAuth } from "../context/auth-context";
+import { getAssets } from "../services/assetService";
+import { getApiErrorMessage } from "../utils/apiError";
+
+const PAGE_SIZE = 7;
 
 function AdminAssets() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [assets, setAssets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [status, setStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getAssets()
+      .then((list) => {
+        if (!isMounted) return;
+        setAssets(Array.isArray(list) ? list : []);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setError(getApiErrorMessage(err, "Unable to load assets."));
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const counts = useMemo(() => {
+    const next = {
+      total: assets.length,
+      available: 0,
+      assigned: 0,
+      underRepair: 0,
+      retired: 0,
+    };
+
+    for (const asset of assets) {
+      const normalized = String(asset.status || "").toUpperCase();
+      if (normalized === "AVAILABLE") next.available += 1;
+      else if (normalized === "ASSIGNED") next.assigned += 1;
+      else if (normalized === "UNDER_REPAIR") next.underRepair += 1;
+      else if (normalized === "RETIRED") next.retired += 1;
+    }
+
+    return next;
+  }, [assets]);
+
+  const filteredAssets = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return assets.filter((asset) => {
+      if (status && String(asset.status || "").toUpperCase() !== status) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      const searchable = [
+        asset.assetId,
+        asset.name,
+        asset.type,
+        asset.serialNumber,
+        asset.assignedTo?.fullName,
+        asset.assignedEmployee?.fullName,
+        asset.employee?.fullName,
+        asset.assignedToName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+  }, [assets, searchQuery, status]);
 
   const hasActiveFilters = Boolean(searchQuery.trim() || status);
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setStatus("");
+    setCurrentPage(1);
   };
 
   const handleAddAsset = () => {
@@ -87,11 +168,11 @@ function AdminAssets() {
             {/* Stat Cards */}
             <div className="mt-6">
               <AssetStatCards
-                totalCount={0}
-                availableCount={0}
-                assignedCount={0}
-                underRepairCount={0}
-                retiredCount={0}
+                totalCount={counts.total}
+                availableCount={counts.available}
+                assignedCount={counts.assigned}
+                underRepairCount={counts.underRepair}
+                retiredCount={counts.retired}
               />
             </div>
 
@@ -99,16 +180,38 @@ function AdminAssets() {
             <div className="mt-5">
               <AssetFilters
                 searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
+                onSearchChange={(val) => {
+                  setSearchQuery(val);
+                  setCurrentPage(1);
+                }}
                 status={status}
-                onStatusChange={setStatus}
+                onStatusChange={(val) => {
+                  setStatus(val);
+                  setCurrentPage(1);
+                }}
                 onClearFilters={handleClearFilters}
               />
             </div>
 
-            {/* Empty / Filtered State */}
+            {/* Directory Content */}
             <div className="mt-6">
-              {hasActiveFilters ? (
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-4 rounded-[8px] bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-700"
+                >
+                  {error}
+                </div>
+              )}
+
+              {isLoading ? (
+                <div className="bg-white border border-[#E2E8F0] rounded-[12px] py-20 flex flex-col items-center justify-center text-[#64748B]">
+                  <LoaderCircle className="w-6 h-6 animate-spin mb-2" />
+                  <p className="text-[13px]">Loading assets...</p>
+                </div>
+              ) : assets.length === 0 && !hasActiveFilters ? (
+                <AdminAssetsEmptyState onAddAsset={handleAddAsset} />
+              ) : filteredAssets.length === 0 ? (
                 <div className="bg-white border border-[#E2E8F0] rounded-[12px] py-16 px-6 text-center">
                   <p className="text-[16px] font-semibold text-[#0F172A]">
                     No matching assets found
@@ -125,7 +228,13 @@ function AdminAssets() {
                   </button>
                 </div>
               ) : (
-                <AdminAssetsEmptyState onAddAsset={handleAddAsset} />
+                <AssetTable
+                  assets={filteredAssets}
+                  totalItems={filteredAssets.length}
+                  currentPage={currentPage}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setCurrentPage}
+                />
               )}
             </div>
           </div>

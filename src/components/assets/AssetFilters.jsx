@@ -35,10 +35,10 @@ function AssetFilters({
           className="h-[40px] min-w-[175px] bg-white border border-[#E2E8F0] rounded-[8px] pl-3.5 pr-9 text-[13px] font-medium text-[#0F172A] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1E3247]/20 focus:border-[#1E3247]"
         >
           <option value="">Status</option>
-          <option value="available">Available</option>
-          <option value="assigned">Assigned</option>
-          <option value="under_repair">Under Repair</option>
-          <option value="retired">Retired</option>
+          <option value="AVAILABLE">Available</option>
+          <option value="ASSIGNED">Assigned</option>
+          <option value="UNDER_REPAIR">Under Repair</option>
+          <option value="RETIRED">Retired</option>
         </select>
         <ChevronDown
           className="w-4 h-4 text-[#0F172A] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
