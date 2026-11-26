@@ -14,6 +14,7 @@ import {
 
 import Sidebar from "../layouts/Sidebar";
 import DashboardHeader from "../layouts/DashboardHeader";
+import AssetAssignedModal from "../components/assets/AssetAssignedModal";
 import { useAuth } from "../context/auth-context";
 import { assignAsset, getAssets } from "../services/assetService";
 import { getEmployees } from "../services/employeeService";
@@ -243,6 +244,7 @@ function AssignAsset() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignedResult, setAssignedResult] = useState(null);
 
   useEffect(() => {
     if (asset || !id) return;
@@ -324,7 +326,7 @@ function AssignAsset() {
     }
   };
 
-const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting) return;
 
@@ -336,8 +338,25 @@ const handleSubmit = async (event) => {
     setIsSubmitting(true);
     try {
       await assignAsset(asset?.id || id, selectedEmployeeId);
-      toast.success("Asset assigned successfully.");
-      navigate("/admin/assets", { replace: true });
+
+      const selectedEmp = employees.find(
+        (emp) => emp.id === selectedEmployeeId,
+      );
+      const employeeName =
+        selectedEmp?.fullName ||
+        `${selectedEmp?.firstName || ""} ${selectedEmp?.lastName || ""}`.trim() ||
+        selectedEmp?.workEmail ||
+        selectedEmp?.username ||
+        "—";
+      const departmentName =
+        selectedEmp?.department?.name || selectedEmp?.departmentName || "—";
+
+      setAssignedResult({
+        employeeName,
+        departmentName,
+        assetId: asset?.assetId || asset?.assetCode || "—",
+        assetType: asset?.type || "—",
+      });
     } catch (err) {
       toast.error(
         getApiErrorMessage(err, "Unable to assign asset. Please try again."),
@@ -568,6 +587,15 @@ const handleSubmit = async (event) => {
           </div>
         </main>
       </div>
+
+      <AssetAssignedModal
+        isOpen={Boolean(assignedResult)}
+        employeeName={assignedResult?.employeeName}
+        departmentName={assignedResult?.departmentName}
+        assetId={assignedResult?.assetId}
+        assetType={assignedResult?.assetType}
+        onDone={() => navigate("/admin/assets", { replace: true })}
+      />
     </div>
   );
 }

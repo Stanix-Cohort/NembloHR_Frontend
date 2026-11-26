@@ -72,6 +72,25 @@ function buildPageNumbers(currentPage, totalPages) {
   return [1, "...", currentPage, "...", totalPages];
 }
 
+function getEmployeeFields(employee) {
+  const name =
+    employee.fullName ||
+    `${employee.firstName || ""} ${employee.lastName || ""}`.trim() ||
+    employee.username ||
+    "—";
+  const email = employee.workEmail || employee.email || "—";
+  const departmentName =
+    employee.department?.name || employee.departmentName || "—";
+  const jobTitle = employee.jobTitle || "—";
+  const status =
+    employee.employmentStatus ??
+    employee.status ??
+    (employee.isActive === false ? "inactive" : "active");
+  const dateAdded = formatDate(employee.createdAt || employee.startDate);
+
+  return { name, email, departmentName, jobTitle, status, dateAdded };
+}
+
 function EmployeeTable({
   employees = [],
   totalItems = 0,
@@ -147,7 +166,88 @@ function EmployeeTable({
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      {/* Mobile Stacked Card List */}
+      <div className="md:hidden bg-white border border-[#E2E8F0] rounded-[12px] divide-y divide-[#E2E8F0] overflow-hidden">
+        {visibleEmployees.map((employee) => {
+          const { name, email, departmentName, jobTitle, status, dateAdded } =
+            getEmployeeFields(employee);
+          const isMenuOpen = activeMenuEmployee?.id === employee.id;
+
+          return (
+            <div key={employee.id || email} className="p-4 bg-white">
+              {/* Top Row: Employee + Actions */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-[#DCE1E7] text-[#334155] text-[12px] font-semibold flex items-center justify-center shrink-0">
+                    {getInitials(name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[15px] font-bold text-[#0F172A] leading-snug truncate">
+                      {name}
+                    </p>
+                    <p className="text-[12px] text-[#64748B] truncate">
+                      {email}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  data-action-trigger="true"
+                  onClick={(e) => handleToggleMenu(e, employee)}
+                  aria-label={`Actions for ${name}`}
+                  aria-expanded={isMenuOpen}
+                  className="w-9 h-8 rounded-[6px] border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] inline-flex items-center justify-center text-[#1E293B] shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 2x2 Detail Grid */}
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3.5">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Department
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0F172A]">
+                    {departmentName}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Status
+                  </p>
+                  <div className="mt-1">
+                    <StatusBadge status={status} />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Job Title
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0F172A]">
+                    {jobTitle}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Date Added
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0F172A]">
+                    {dateAdded}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop Horizontal Table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-collapse min-w-[820px]">
           <thead>
             <tr className="text-left text-[13px] font-semibold text-[#1E293B]">
@@ -163,22 +263,14 @@ function EmployeeTable({
 
           <tbody>
             {visibleEmployees.map((employee, index) => {
-              const name =
-                employee.fullName ||
-                `${employee.firstName || ""} ${employee.lastName || ""}`.trim() ||
-                employee.username ||
-                "—";
-              const email = employee.workEmail || employee.email || "—";
-              const departmentName =
-                employee.department?.name || employee.departmentName || "—";
-              const jobTitle = employee.jobTitle || "—";
-              const status =
-                employee.employmentStatus ??
-                employee.status ??
-                (employee.isActive === false ? "inactive" : "active");
-              const dateAdded = formatDate(
-                employee.createdAt || employee.startDate,
-              );
+              const {
+                name,
+                email,
+                departmentName,
+                jobTitle,
+                status,
+                dateAdded,
+              } = getEmployeeFields(employee);
               const isMenuOpen = activeMenuEmployee?.id === employee.id;
 
               return (
