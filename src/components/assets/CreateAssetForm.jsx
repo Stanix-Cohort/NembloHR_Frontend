@@ -1,64 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Calendar,
   Check,
   ChevronDown,
+  FileText,
   ImagePlus,
   LoaderCircle,
+  Upload,
   X,
 } from "lucide-react";
 import AssetTypeSelect from "./AssetTypeSelect";
 
 const CONDITION_OPTIONS = [
-  { value: "EXCELLENT", label: "Excellent" },
+  { value: "NEW", label: "New" },
   { value: "GOOD", label: "Good" },
   { value: "FAIR", label: "Fair" },
-  { value: "BAD", label: "Bad" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "AVAILABLE", label: "Available" },
-  { value: "ASSIGNED", label: "Assigned" },
-  { value: "UNDER_REPAIR", label: "Under Repair" },
-  { value: "RETIRED", label: "Retired" },
+  { value: "POOR", label: "Poor" },
+  { value: "DAMAGED", label: "Damaged" },
 ];
 
 const INITIAL_FORM_STATE = {
   assetId: "",
+  name: "",
   serialNumber: "",
-  condition: "",
-  status: "",
-  dateAcquired: "",
-  employeeId: "",
+  condition: "GOOD",
+  description: "",
 };
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
-
-function toIsoDate(displayValue = "") {
-  const match = displayValue.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return "";
-
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return "";
-  }
-
-  return `${match[3]}-${match[2]}-${match[1]}`;
-}
-
-function toDisplayDate(isoValue = "") {
-  const match = isoValue.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return "";
-  return `${match[3]}/${match[2]}/${match[1]}`;
-}
+const ACCEPTED_DOCUMENT_TYPES = ["application/pdf"];
 
 function OptionSelect({
   id,
@@ -68,7 +37,6 @@ function OptionSelect({
   placeholder,
   disabled = false,
   hasError = false,
-  emptyMessage = "No options available",
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -100,7 +68,7 @@ function OptionSelect({
     };
   }, [isOpen]);
 
-  const selectedOption = options.find((opt) => opt.value === value);
+  const selectedOption = options.find((option) => option.value === value);
 
   return (
     <div ref={containerRef} className="relative">
@@ -111,7 +79,7 @@ function OptionSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-invalid={hasError}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => setIsOpen((previous) => !previous)}
         className={`w-full h-[46px] pl-4 pr-10 rounded-[8px] border bg-white text-[14px] text-left flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 disabled:opacity-60 disabled:cursor-not-allowed ${
           hasError
             ? "border-[#DC2626] focus:ring-[#DC2626]/20 focus:border-[#DC2626]"
@@ -119,6 +87,7 @@ function OptionSelect({
         } ${selectedOption ? "text-[#0F172A]" : "text-[#64748B]"}`}
       >
         <span className="truncate">{selectedOption?.label || placeholder}</span>
+
         <ChevronDown
           className={`w-4 h-4 text-[#0F172A] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform ${
             isOpen ? "rotate-180" : ""
@@ -137,19 +106,20 @@ function OptionSelect({
           <div className="max-h-[220px] overflow-y-auto divide-y divide-[#E2E8F0]">
             {options.length === 0 ? (
               <p className="px-4 py-2.5 text-[13px] text-[#64748B]">
-                {emptyMessage}
+                No options available
               </p>
             ) : (
-              options.map((opt) => {
-                const isSelected = opt.value === value;
+              options.map((option) => {
+                const isSelected = option.value === value;
+
                 return (
                   <button
-                    key={opt.value}
+                    key={option.value}
                     type="button"
                     role="option"
                     aria-selected={isSelected}
                     onClick={() => {
-                      if (onChange) onChange(opt.value);
+                      onChange?.(option.value);
                       setIsOpen(false);
                     }}
                     className={`w-full px-4 py-2.5 text-[13px] text-left flex items-center justify-between cursor-pointer hover:bg-[#F8FAFC] ${
@@ -158,7 +128,8 @@ function OptionSelect({
                         : "text-[#0F172A]"
                     }`}
                   >
-                    <span className="truncate">{opt.label}</span>
+                    <span className="truncate">{option.label}</span>
+
                     {isSelected && (
                       <Check
                         className="w-4 h-4 text-[#1E3247] shrink-0"
@@ -181,8 +152,6 @@ function CreateAssetForm({
   selectedAssetTypeId = "",
   onAssetTypeChange,
   onAddNewAssetType,
-  employees = [],
-  employeesLoading = false,
   isSubmitting = false,
   serverError = "",
   statusNotice = "",
@@ -193,10 +162,11 @@ function CreateAssetForm({
   const [errors, setErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [documentFile, setDocumentFile] = useState(null);
 
   const imageInputRef = useRef(null);
+  const documentInputRef = useRef(null);
   const previewUrlRef = useRef("");
-  const datePickerRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -207,46 +177,43 @@ function CreateAssetForm({
   }, []);
 
   const clearFieldError = (field) => {
-    setErrors((prev) => {
-      if (!prev[field]) return prev;
-      const next = { ...prev };
+    setErrors((previous) => {
+      if (!previous[field]) return previous;
+
+      const next = { ...previous };
       delete next[field];
+
       return next;
     });
   };
 
   const handleInputChange = (field) => (event) => {
     const value = event.target.value;
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    clearFieldError(field);
-  };
 
-  const handleSelectChange = (field) => (value) => {
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((previous) => ({
+      ...previous,
       [field]: value,
-      ...(field === "status" && value !== "ASSIGNED" ? { employeeId: "" } : {}),
     }));
+
     clearFieldError(field);
-    if (field === "status" && value !== "ASSIGNED") {
-      clearFieldError("employeeId");
-    }
   };
 
   const handleAssetTypeSelect = (typeId) => {
-    if (onAssetTypeChange) onAssetTypeChange(typeId);
+    onAssetTypeChange?.(typeId);
     clearFieldError("assetTypeId");
   };
 
   const handleImageSelect = (event) => {
     const file = event.target.files?.[0];
+
     if (!file) return;
 
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      setErrors((prev) => ({
-        ...prev,
+      setErrors((previous) => ({
+        ...previous,
         image: "Please upload a JPG or PNG image.",
       }));
+
       event.target.value = "";
       return;
     }
@@ -256,128 +223,149 @@ function CreateAssetForm({
     }
 
     const nextPreview = URL.createObjectURL(file);
+
     previewUrlRef.current = nextPreview;
     setImageFile(file);
     setImagePreview(nextPreview);
+
     clearFieldError("image");
   };
 
-  const handleRemoveImage = (event) => {
-    event.stopPropagation();
+  const handleRemoveImage = () => {
     if (previewUrlRef.current) {
       URL.revokeObjectURL(previewUrlRef.current);
       previewUrlRef.current = "";
     }
+
     setImageFile(null);
     setImagePreview("");
+
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
     }
+
     clearFieldError("image");
   };
 
-  const handleOpenDatePicker = () => {
-    if (isSubmitting) return;
-    if (datePickerRef.current?.showPicker) {
-      datePickerRef.current.showPicker();
-    } else {
-      datePickerRef.current?.click();
+  const handleDocumentSelect = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!ACCEPTED_DOCUMENT_TYPES.includes(file.type)) {
+      setErrors((previous) => ({
+        ...previous,
+        document: "Please upload a PDF document.",
+      }));
+
+      event.target.value = "";
+      return;
     }
+
+    setDocumentFile(file);
+    clearFieldError("document");
   };
 
-  const isAssigned = formData.status === "ASSIGNED";
+  const handleRemoveDocument = () => {
+    setDocumentFile(null);
 
-  const employeeOptions = employees.map((emp) => ({
-    value: emp.id,
-    label:
-      emp.fullName ||
-      `${emp.firstName || ""} ${emp.lastName || ""}`.trim() ||
-      emp.workEmail ||
-      emp.username,
-  }));
+    if (documentInputRef.current) {
+      documentInputRef.current.value = "";
+    }
+
+    clearFieldError("document");
+  };
+
+  const handleSelectChange = (field) => (value) => {
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+
+    clearFieldError(field);
+  };
 
   const validate = () => {
     const nextErrors = {};
 
     if (!formData.assetId.trim()) {
       nextErrors.assetId = "Asset ID is required.";
+    } else if (formData.assetId.trim().length > 100) {
+      nextErrors.assetId = "Asset ID cannot exceed 100 characters.";
+    }
+
+    if (!formData.name.trim()) {
+      nextErrors.name = "Asset name is required.";
+    } else if (formData.name.trim().length > 150) {
+      nextErrors.name = "Asset name cannot exceed 150 characters.";
     }
 
     if (!selectedAssetTypeId) {
       nextErrors.assetTypeId = "Asset type is required.";
     }
 
-    if (!formData.serialNumber.trim()) {
-      nextErrors.serialNumber = "Serial number is required.";
+    if (formData.serialNumber.trim().length > 150) {
+      nextErrors.serialNumber = "Serial number cannot exceed 150 characters.";
     }
 
-    if (!formData.condition) {
-      nextErrors.condition = "Condition is required.";
-    }
-
-    if (!formData.status) {
-      nextErrors.status = "Status is required.";
-    }
-
-    if (
-      formData.dateAcquired.trim() &&
-      !toIsoDate(formData.dateAcquired.trim())
-    ) {
-      nextErrors.dateAcquired = "Enter a valid date in DD/MM/YYYY format.";
-    }
-
-    if (isAssigned && !formData.employeeId) {
-      nextErrors.employeeId = "Please select an employee.";
+    if (formData.description.trim().length > 2000) {
+      nextErrors.description = "Description cannot exceed 2,000 characters.";
     }
 
     return nextErrors;
   };
 
+  const resetForm = () => {
+    setFormData(INITIAL_FORM_STATE);
+    setErrors({});
+
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
+    }
+
+    setImageFile(null);
+    setImagePreview("");
+    setDocumentFile(null);
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+
+    if (documentInputRef.current) {
+      documentInputRef.current.value = "";
+    }
+
+    onAssetTypeChange?.("");
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
+
     if (isSubmitting) return;
 
     const validationErrors = validate();
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
-    const isoDateAcquired = formData.dateAcquired.trim()
-      ? toIsoDate(formData.dateAcquired.trim())
-      : "";
-
     const payload = {
-      assetCode: formData.assetId.trim(),
-      assetTypeId: selectedAssetTypeId,
-      serialNumber: formData.serialNumber.trim(),
+      assetId: formData.assetId.trim(),
+      name: formData.name.trim(),
       condition: formData.condition,
-      status: formData.status,
-      ...(isoDateAcquired ? { dateAcquired: isoDateAcquired } : {}),
-      ...(imageFile ? { image: imageFile } : {}),
-      ...(isAssigned && formData.employeeId
-        ? { assignedToEmployeeId: formData.employeeId }
+      ...(formData.serialNumber.trim()
+        ? { serialNumber: formData.serialNumber.trim() }
         : {}),
+      ...(formData.description.trim()
+        ? { description: formData.description.trim() }
+        : {}),
+      ...(imageFile ? { image: imageFile } : {}),
+      ...(documentFile ? { file: documentFile } : {}),
     };
 
-    if (onSubmit) {
-      onSubmit(payload, {
-        resetForm: () => {
-          setFormData(INITIAL_FORM_STATE);
-          setErrors({});
-          if (previewUrlRef.current) {
-            URL.revokeObjectURL(previewUrlRef.current);
-            previewUrlRef.current = "";
-          }
-          setImageFile(null);
-          setImagePreview("");
-          if (imageInputRef.current) {
-            imageInputRef.current.value = "";
-          }
-          if (onAssetTypeChange) onAssetTypeChange("");
-        },
-      });
-    }
+    onSubmit?.(payload, { resetForm });
   };
 
   const getInputClasses = (hasError) =>
@@ -412,76 +400,157 @@ function CreateAssetForm({
         </div>
       )}
 
-      {/* Asset Image Upload */}
+      {/* Asset Image and Supporting Document */}
       <div>
         <h2 className="text-[14px] font-bold text-[#0F172A] leading-snug">
           Asset Image
         </h2>
+
         <p className="mt-0.5 text-[12px] text-[#64748B]">
           Upload a photograph of the company asset.
         </p>
 
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/png,image/jpeg"
-          onChange={handleImageSelect}
-          disabled={isSubmitting}
-          className="hidden"
-          aria-label="Upload asset image"
-        />
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-start gap-6">
+          <div>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={handleImageSelect}
+              disabled={isSubmitting}
+              className="hidden"
+              aria-label="Upload asset image"
+            />
 
-        <div className="mt-3">
-          {imagePreview ? (
-            <div className="relative w-[190px] h-[146px] rounded-[12px] border border-[#CBD5E1] bg-[#F8FAFC] overflow-hidden group">
-              <img
-                src={imagePreview}
-                alt="Selected asset preview"
-                className="w-full h-full object-cover"
-              />
+            {imagePreview ? (
+              <div className="relative w-[190px] h-[146px] rounded-[12px] border border-[#CBD5E1] bg-[#F8FAFC] overflow-hidden group">
+                <img
+                  src={imagePreview}
+                  alt="Selected asset preview"
+                  className="w-full h-full object-cover"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isSubmitting}
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center text-white text-[12px] font-medium opacity-0 group-hover:opacity-100 cursor-pointer"
+                >
+                  Change Image
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={isSubmitting}
+                  aria-label="Remove uploaded image"
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white border border-[#CBD5E1] text-[#0F172A] hover:text-[#DC2626] flex items-center justify-center shadow-xs cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" strokeWidth={2} />
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
                 disabled={isSubmitting}
-                className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center text-white text-[12px] font-medium opacity-0 group-hover:opacity-100 cursor-pointer"
+                className="w-[190px] h-[146px] rounded-[12px] border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] flex flex-col items-center justify-center text-center px-4 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Change Image
+                <ImagePlus
+                  className="w-6 h-6 text-[#1E293B]"
+                  strokeWidth={1.6}
+                  aria-hidden="true"
+                />
+
+                <span className="mt-2.5 text-[14px] font-semibold text-[#0F172A]">
+                  Upload Image
+                </span>
+
+                <span className="mt-0.5 text-[12px] text-[#64748B]">
+                  JPG or PNG
+                </span>
               </button>
+            )}
+
+            {errors.image && (
+              <p className="mt-1.5 text-[12px] text-[#DC2626]">
+                {errors.image}
+              </p>
+            )}
+          </div>
+
+          <div className="w-full sm:max-w-[300px]">
+            <h2 className="text-[14px] font-bold text-[#0F172A] leading-snug">
+              Supporting Document
+              <span className="ml-1.5 text-[11px] font-normal text-[#64748B]">
+                (Optional)
+              </span>
+            </h2>
+
+            <p className="mt-0.5 text-[12px] text-[#64748B]">
+              Attach an asset receipt, invoice or related document.
+            </p>
+
+            <input
+              ref={documentInputRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              onChange={handleDocumentSelect}
+              disabled={isSubmitting}
+              className="hidden"
+              aria-label="Upload supporting PDF document"
+            />
+
+            {documentFile ? (
+              <div className="mt-3 min-h-[66px] flex items-center gap-3 rounded-[10px] border border-[#CBD5E1] bg-[#F8FAFC] px-3 py-2.5">
+                <div className="w-9 h-9 shrink-0 rounded-[8px] bg-white border border-[#E2E8F0] flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-[#1E3247]" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-medium text-[#0F172A] truncate">
+                    {documentFile.name}
+                  </p>
+                  <p className="text-[11px] text-[#64748B]">PDF document</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRemoveDocument}
+                  disabled={isSubmitting}
+                  aria-label="Remove supporting document"
+                  className="w-7 h-7 shrink-0 rounded-full hover:bg-white text-[#64748B] hover:text-[#DC2626] flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={handleRemoveImage}
+                onClick={() => documentInputRef.current?.click()}
                 disabled={isSubmitting}
-                aria-label="Remove uploaded image"
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white border border-[#CBD5E1] text-[#0F172A] hover:text-[#DC2626] flex items-center justify-center shadow-xs cursor-pointer"
+                className="mt-3 w-full min-h-[66px] rounded-[10px] border border-dashed border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] flex items-center gap-3 px-4 text-left cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <X className="w-3.5 h-3.5" strokeWidth={2} />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              disabled={isSubmitting}
-              className="w-[190px] h-[146px] rounded-[12px] border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] flex flex-col items-center justify-center text-center px-4 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <ImagePlus
-                className="w-6 h-6 text-[#1E293B]"
-                strokeWidth={1.6}
-                aria-hidden="true"
-              />
-              <span className="mt-2.5 text-[14px] font-semibold text-[#0F172A]">
-                Upload Image
-              </span>
-              <span className="mt-0.5 text-[12px] text-[#64748B]">
-                JPG or PNG
-              </span>
-            </button>
-          )}
-        </div>
+                <div className="w-9 h-9 shrink-0 rounded-[8px] bg-[#F1F5F9] flex items-center justify-center">
+                  <Upload className="w-[18px] h-[18px] text-[#1E3247]" />
+                </div>
 
-        {errors.image && (
-          <p className="mt-1.5 text-[12px] text-[#DC2626]">{errors.image}</p>
-        )}
+                <div>
+                  <p className="text-[13px] font-medium text-[#0F172A]">
+                    Attach PDF
+                  </p>
+                  <p className="text-[11px] text-[#64748B]">PDF files only</p>
+                </div>
+              </button>
+            )}
+
+            {errors.document && (
+              <p className="mt-1.5 text-[12px] text-[#DC2626]">
+                {errors.document}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Form Grid */}
@@ -494,10 +563,12 @@ function CreateAssetForm({
           >
             Asset ID <span className="text-[#DC2626]">*</span>
           </label>
+
           <input
             id="assetId"
             name="assetId"
             type="text"
+            maxLength={100}
             value={formData.assetId}
             onChange={handleInputChange("assetId")}
             placeholder="Enter asset ID"
@@ -505,10 +576,38 @@ function CreateAssetForm({
             aria-invalid={Boolean(errors.assetId)}
             className={getInputClasses(Boolean(errors.assetId))}
           />
+
           {errors.assetId && (
             <p className="mt-1.5 text-[12px] text-[#DC2626]">
               {errors.assetId}
             </p>
+          )}
+        </div>
+
+        {/* Asset Name */}
+        <div>
+          <label
+            htmlFor="name"
+            className="block text-[14px] font-medium text-[#0F172A] mb-2"
+          >
+            Asset Name <span className="text-[#DC2626]">*</span>
+          </label>
+
+          <input
+            id="name"
+            name="name"
+            type="text"
+            maxLength={150}
+            value={formData.name}
+            onChange={handleInputChange("name")}
+            placeholder="Enter asset name"
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.name)}
+            className={getInputClasses(Boolean(errors.name))}
+          />
+
+          {errors.name && (
+            <p className="mt-1.5 text-[12px] text-[#DC2626]">{errors.name}</p>
           )}
         </div>
 
@@ -520,6 +619,7 @@ function CreateAssetForm({
           >
             Asset Type <span className="text-[#DC2626]">*</span>
           </label>
+
           <AssetTypeSelect
             id="assetType"
             value={selectedAssetTypeId}
@@ -529,6 +629,7 @@ function CreateAssetForm({
             hasError={Boolean(errors.assetTypeId)}
             onAddNewAssetType={onAddNewAssetType}
           />
+
           {errors.assetTypeId && (
             <p className="mt-1.5 text-[12px] text-[#DC2626]">
               {errors.assetTypeId}
@@ -542,12 +643,17 @@ function CreateAssetForm({
             htmlFor="serialNumber"
             className="block text-[14px] font-medium text-[#0F172A] mb-2"
           >
-            Serial Number <span className="text-[#DC2626]">*</span>
+            Serial Number
+            <span className="ml-1.5 text-[11px] font-normal text-[#64748B]">
+              (Optional)
+            </span>
           </label>
+
           <input
             id="serialNumber"
             name="serialNumber"
             type="text"
+            maxLength={150}
             value={formData.serialNumber}
             onChange={handleInputChange("serialNumber")}
             placeholder="Enter serial number"
@@ -555,6 +661,7 @@ function CreateAssetForm({
             aria-invalid={Boolean(errors.serialNumber)}
             className={getInputClasses(Boolean(errors.serialNumber))}
           />
+
           {errors.serialNumber && (
             <p className="mt-1.5 text-[12px] text-[#DC2626]">
               {errors.serialNumber}
@@ -568,8 +675,9 @@ function CreateAssetForm({
             htmlFor="condition"
             className="block text-[14px] font-medium text-[#0F172A] mb-2"
           >
-            Condition <span className="text-[#DC2626]">*</span>
+            Condition
           </label>
+
           <OptionSelect
             id="condition"
             value={formData.condition}
@@ -579,6 +687,7 @@ function CreateAssetForm({
             disabled={isSubmitting}
             hasError={Boolean(errors.condition)}
           />
+
           {errors.condition && (
             <p className="mt-1.5 text-[12px] text-[#DC2626]">
               {errors.condition}
@@ -586,109 +695,45 @@ function CreateAssetForm({
           )}
         </div>
 
-        {/* Status */}
-        <div>
+        {/* Description */}
+        <div className="md:col-span-2">
           <label
-            htmlFor="status"
+            htmlFor="description"
             className="block text-[14px] font-medium text-[#0F172A] mb-2"
           >
-            Status <span className="text-[#DC2626]">*</span>
+            Description
+            <span className="ml-1.5 text-[11px] font-normal text-[#64748B]">
+              (Optional)
+            </span>
           </label>
-          <OptionSelect
-            id="status"
-            value={formData.status}
-            onChange={handleSelectChange("status")}
-            options={STATUS_OPTIONS}
-            placeholder="Select status"
+
+          <textarea
+            id="description"
+            name="description"
+            rows={4}
+            maxLength={2000}
+            value={formData.description}
+            onChange={handleInputChange("description")}
+            placeholder="Add relevant details about this asset..."
             disabled={isSubmitting}
-            hasError={Boolean(errors.status)}
+            aria-invalid={Boolean(errors.description)}
+            className={`w-full min-h-[110px] px-4 py-3 rounded-[8px] border bg-white text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:ring-2 resize-y disabled:opacity-60 disabled:cursor-not-allowed ${
+              errors.description
+                ? "border-[#DC2626] focus:ring-[#DC2626]/20 focus:border-[#DC2626]"
+                : "border-[#CBD5E1] focus:ring-[#1E3247]/20 focus:border-[#1E3247]"
+            }`}
           />
-          {errors.status && (
-            <p className="mt-1.5 text-[12px] text-[#DC2626]">{errors.status}</p>
-          )}
-        </div>
 
-        {/* Date Acquired */}
-        <div>
-          <label
-            htmlFor="dateAcquired"
-            className="block text-[14px] font-medium text-[#0F172A] mb-2"
-          >
-            Date Acquired
-          </label>
-          <div className="relative">
-            <input
-              id="dateAcquired"
-              name="dateAcquired"
-              type="text"
-              inputMode="numeric"
-              value={formData.dateAcquired}
-              onChange={handleInputChange("dateAcquired")}
-              placeholder="DD/MM/YYYY"
-              disabled={isSubmitting}
-              aria-invalid={Boolean(errors.dateAcquired)}
-              className={`${getInputClasses(Boolean(errors.dateAcquired))} pr-11`}
-            />
-
-            <input
-              ref={datePickerRef}
-              type="date"
-              tabIndex={-1}
-              aria-hidden="true"
-              value={toIsoDate(formData.dateAcquired)}
-              onChange={(e) => {
-                const formatted = toDisplayDate(e.target.value);
-                setFormData((prev) => ({ ...prev, dateAcquired: formatted }));
-                clearFieldError("dateAcquired");
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 opacity-0 pointer-events-none"
-            />
-
-            <button
-              type="button"
-              onClick={handleOpenDatePicker}
-              disabled={isSubmitting}
-              aria-label="Open calendar to pick date acquired"
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#0F172A] cursor-pointer focus:outline-none disabled:opacity-50"
-            >
-              <Calendar className="w-[18px] h-[18px]" strokeWidth={1.75} />
-            </button>
-          </div>
-          {errors.dateAcquired && (
+          {errors.description && (
             <p className="mt-1.5 text-[12px] text-[#DC2626]">
-              {errors.dateAcquired}
+              {errors.description}
             </p>
           )}
-        </div>
 
-        {/* Select Employee (shown when Status is Assigned) */}
-        {isAssigned && (
-          <div>
-            <label
-              htmlFor="employeeId"
-              className="block text-[14px] font-medium text-[#0F172A] mb-2"
-            >
-              Select Employee <span className="text-[#DC2626]">*</span>
-            </label>
-            <OptionSelect
-              id="employeeId"
-              value={formData.employeeId}
-              onChange={handleSelectChange("employeeId")}
-              options={employeeOptions}
-              placeholder={
-                employeesLoading ? "Loading employees..." : "Select Employee"
-              }
-              disabled={isSubmitting || employeesLoading}
-              hasError={Boolean(errors.employeeId)}
-              emptyMessage="No employees found"
-            />
-            {errors.employeeId && (
-              <p className="mt-1.5 text-[12px] text-[#DC2626]">
-                {errors.employeeId}
-              </p>
-            )}
-          </div>
-        )}
+          <p className="mt-1 text-[11px] text-[#94A3B8] text-right">
+            {formData.description.length}/2000
+          </p>
+        </div>
       </div>
 
       {/* Form Actions */}
@@ -701,12 +746,14 @@ function CreateAssetForm({
         >
           Cancel
         </button>
+
         <button
           type="submit"
           disabled={isSubmitting}
           className="h-[42px] px-5 rounded-[8px] bg-[#1E3247] hover:bg-[#162638] active:bg-[#101D2B] text-[13px] font-medium text-white inline-flex items-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/40 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isSubmitting && <LoaderCircle className="w-4 h-4 animate-spin" />}
+
           <span>{isSubmitting ? "Saving..." : "Save Asset"}</span>
         </button>
       </div>
