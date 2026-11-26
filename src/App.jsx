@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminAssets from "./pages/AdminAssets";
 import CreateAsset from "./pages/CreateAsset";
 import ToastProvider from "./components/common/ToastProvider";
+import AssignAsset from "./pages/AssignAsset";
 
 function App() {
   return (
@@ -20,18 +21,20 @@ function App() {
         <Route path="/login" element={<AdminLogin />} />
 
         {/* Protected Admin routes */}
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          <Route path="/admin/employees" element={<AdminDashboard />} />
-          <Route path="/admin/employees/new" element={<CreateEmployee />} />
-          <Route path="/admin/employees/:id/edit" element={<EditEmployee />} />
-          <Route path="/admin/assets" element={<AdminAssets />} />
-          <Route path="/admin/assets/new" element={<CreateAsset />} />
+{/* Protected Admin routes */}
+      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+        <Route path="/admin/employees" element={<AdminDashboard />} />
+        <Route path="/admin/employees/new" element={<CreateEmployee />} />
+        <Route path="/admin/employees/:id/edit" element={<EditEmployee />} />
+        <Route path="/admin/assets" element={<AdminAssets />} />
+        <Route path="/admin/assets/new" element={<CreateAsset />} />
+        <Route path="/admin/assets/:id/assign" element={<AssignAsset />} />
 
-          <Route
-            path="/dashboard"
-            element={<Navigate to="/admin/employees" replace />}
-          />
-        </Route>
+        <Route
+          path="/dashboard"
+          element={<Navigate to="/admin/employees" replace />}
+        />
+      </Route>
 
         {/* Protected Employee routes */}
         <Route element={<ProtectedRoute allowedRoles={["EMPLOYEE"]} />}>

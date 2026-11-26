@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Eye,
   MoreHorizontal,
   Pencil,
-  UserPlus,
+  UserCheck,
 } from "lucide-react";
 
 const CONDITION_LABELS = {
@@ -93,8 +94,10 @@ function AssetTable({
   currentPage = 1,
   pageSize = 7,
   onPageChange,
+  onViewAsset,
   onEditAsset,
   onAssignAsset,
+  onUnassignAsset,
 }) {
   const [openMenu, setOpenMenu] = useState(null);
   const menuRef = useRef(null);
@@ -130,7 +133,7 @@ function AssetTable({
     }
 
     const rect = event.currentTarget.getBoundingClientRect();
-    const openUpward = window.innerHeight - rect.bottom < 120;
+    const openUpward = window.innerHeight - rect.bottom < 150;
 
     setOpenMenu({
       asset,
@@ -152,6 +155,11 @@ function AssetTable({
       : assets;
 
   const activeMenuAsset = openMenu?.asset;
+  const activeMenuStatus = String(
+    activeMenuAsset?.status || "AVAILABLE",
+  ).toUpperCase();
+  const isAssignedAsset = activeMenuStatus === "ASSIGNED";
+  const isAvailableAsset = activeMenuStatus === "AVAILABLE";
 
   return (
     <div>
@@ -178,6 +186,7 @@ function AssetTable({
               const condition = formatCondition(asset.condition);
               const assignedName =
                 asset.assignedTo?.fullName ||
+                asset.currentAssignment?.employee?.fullName ||
                 asset.assignedEmployee?.fullName ||
                 asset.employee?.fullName ||
                 asset.assignedToName ||
@@ -241,10 +250,23 @@ function AssetTable({
         <div
           ref={menuRef}
           style={{ top: openMenu.top, right: openMenu.right }}
-          className={`fixed z-50 w-48 bg-white border border-[#E2E8F0] rounded-[10px] shadow-md py-1.5 text-left ${
+          className={`fixed z-50 w-52 bg-white border border-[#E2E8F0] rounded-[10px] shadow-md py-1.5 text-left ${
             openMenu.openUpward ? "-translate-y-full" : ""
           }`}
         >
+          <button
+            type="button"
+            onClick={() => {
+              const target = activeMenuAsset;
+              setOpenMenu(null);
+              if (onViewAsset) onViewAsset(target);
+            }}
+            className="w-full px-3.5 py-2 text-[13px] text-[#1E293B] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
+          >
+            <Eye className="w-4 h-4" strokeWidth={1.75} />
+            <span>View Details</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -258,18 +280,35 @@ function AssetTable({
             <span>Edit Asset</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              const target = activeMenuAsset;
-              setOpenMenu(null);
-              if (onAssignAsset) onAssignAsset(target);
-            }}
-            className="w-full px-3.5 py-2 text-[13px] text-[#1E293B] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" strokeWidth={1.75} />
-            <span>Assign Asset</span>
-          </button>
+          {isAvailableAsset && (
+            <button
+              type="button"
+              onClick={() => {
+                const target = activeMenuAsset;
+                setOpenMenu(null);
+                if (onAssignAsset) onAssignAsset(target);
+              }}
+              className="w-full px-3.5 py-2 text-[13px] text-[#1E293B] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4" strokeWidth={1.75} />
+              <span>Assign Employee</span>
+            </button>
+          )}
+
+          {isAssignedAsset && (
+            <button
+              type="button"
+              onClick={() => {
+                const target = activeMenuAsset;
+                setOpenMenu(null);
+                if (onUnassignAsset) onUnassignAsset(target);
+              }}
+              className="w-full px-3.5 py-2 text-[13px] text-[#1E293B] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4" strokeWidth={1.75} />
+              <span>Retrieve/Unassign</span>
+            </button>
+          )}
         </div>
       )}
 

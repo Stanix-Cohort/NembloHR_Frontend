@@ -46,3 +46,11 @@ export async function getAssets(params = {}) {
 
   return payload?.assets ?? payload?.items ?? payload?.records ?? [];
 }
+
+export async function assignAsset(assetId, employeeId) {
+  const response = await apiClient.post(`/assets/${assetId}/assign`, {
+    employeeId,
+  });
+
+  return response.data?.data ?? response.data;
+}

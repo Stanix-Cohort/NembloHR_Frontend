@@ -234,6 +234,11 @@ function AdminAssets() {
                   currentPage={currentPage}
                   pageSize={PAGE_SIZE}
                   onPageChange={setCurrentPage}
+                  onAssignAsset={(asset) =>
+                    navigate(`/admin/assets/${asset.id}/assign`, {
+                      state: { asset },
+                    })
+                  }
                 />
               )}
             </div>
