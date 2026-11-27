@@ -54,3 +54,9 @@ export async function assignAsset(assetId, employeeId) {
 
   return response.data?.data ?? response.data;
 }
+
+export async function returnAsset(assetId) {
+  const response = await apiClient.patch(`/assets/${assetId}/return`);
+
+  return response.data?.data ?? response.data;
+}

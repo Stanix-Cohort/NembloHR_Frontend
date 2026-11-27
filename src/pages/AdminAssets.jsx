@@ -239,6 +239,11 @@ function AdminAssets() {
                       state: { asset },
                     })
                   }
+                  onUnassignAsset={(asset) =>
+                    navigate(`/admin/assets/${asset.id}/retrieve`, {
+                      state: { asset },
+                    })
+                  }
                 />
               )}
             </div>
