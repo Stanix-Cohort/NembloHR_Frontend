@@ -88,6 +88,33 @@ function buildPageNumbers(currentPage, totalPages) {
   return [1, "...", currentPage, "...", totalPages];
 }
 
+function getAssetFields(asset) {
+  const assetCode = asset.assetId || asset.assetCode || "—";
+  const assetName = asset.name || "";
+  const assetType =
+    asset.type || asset.assetType?.name || asset.assetType || "—";
+  const serialNumber = asset.serialNumber || "—";
+  const condition = formatCondition(asset.condition);
+  const statusNormalized = String(asset.status || "").toUpperCase();
+  const assignedName =
+    asset.assignedTo?.fullName ||
+    asset.currentAssignment?.employee?.fullName ||
+    asset.assignedEmployee?.fullName ||
+    asset.employee?.fullName ||
+    asset.assignedToName ||
+    "";
+
+  return {
+    assetCode,
+    assetName,
+    assetType,
+    serialNumber,
+    condition,
+    statusNormalized,
+    assignedName,
+  };
+}
+
 function AssetTable({
   assets = [],
   totalItems = 0,
@@ -163,7 +190,110 @@ function AssetTable({
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      {/* Mobile Stacked Card List */}
+      <div className="md:hidden bg-white border border-[#E2E8F0] rounded-[12px] divide-y divide-[#E2E8F0] overflow-hidden">
+        {visibleAssets.map((asset) => {
+          const {
+            assetCode,
+            assetName,
+            assetType,
+            serialNumber,
+            condition,
+            statusNormalized,
+            assignedName,
+          } = getAssetFields(asset);
+          const isMenuOpen = activeMenuAsset?.id === asset.id;
+
+          return (
+            <div key={asset.id || assetCode} className="p-4 bg-white">
+              {/* Top Row: Asset ID + Actions */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Asset ID
+                  </p>
+                  <p className="mt-0.5 text-[15px] font-bold text-[#0F172A] leading-snug truncate">
+                    {assetCode}
+                  </p>
+                  {assetName && (
+                    <p className="text-[12px] text-[#64748B] truncate">
+                      {assetName}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  data-asset-action-trigger="true"
+                  onClick={(e) => handleToggleMenu(e, asset)}
+                  aria-label={`Actions for ${assetCode}`}
+                  aria-expanded={isMenuOpen}
+                  className="w-9 h-8 rounded-[6px] border border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] inline-flex items-center justify-center text-[#1E293B] shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3247]/30"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Detail Grid */}
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3.5">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Asset Type
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0F172A]">
+                    {assetType}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Status
+                  </p>
+                  <div className="mt-1">
+                    <AssetStatusBadge status={asset.status} />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Serial Number
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0F172A] break-words">
+                    {serialNumber}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Condition
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0F172A]">
+                    {condition}
+                  </p>
+                </div>
+
+                <div className="col-span-2">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B]">
+                    Assigned To
+                  </p>
+                  <p className="mt-1 text-[13px] font-medium">
+                    {assignedName ? (
+                      <span className="text-[#0F172A]">{assignedName}</span>
+                    ) : statusNormalized === "ASSIGNED" ? (
+                      <span className="text-[#94A3B8]">—</span>
+                    ) : (
+                      <span className="text-[#94A3B8]">unassigned</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop Horizontal Table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-collapse min-w-[820px]">
           <thead>
             <tr className="text-left text-[13px] font-semibold text-[#1E293B]">
@@ -179,18 +309,14 @@ function AssetTable({
 
           <tbody>
             {visibleAssets.map((asset, index) => {
-              const assetCode = asset.assetId || asset.assetCode || "—";
-              const assetType =
-                asset.type || asset.assetType?.name || asset.assetType || "—";
-              const serialNumber = asset.serialNumber || "—";
-              const condition = formatCondition(asset.condition);
-              const assignedName =
-                asset.assignedTo?.fullName ||
-                asset.currentAssignment?.employee?.fullName ||
-                asset.assignedEmployee?.fullName ||
-                asset.employee?.fullName ||
-                asset.assignedToName ||
-                "";
+              const {
+                assetCode,
+                assetType,
+                serialNumber,
+                condition,
+                statusNormalized,
+                assignedName,
+              } = getAssetFields(asset);
               const isMenuOpen = activeMenuAsset?.id === asset.id;
 
               return (
@@ -221,6 +347,8 @@ function AssetTable({
                   <td className="py-3.5 px-4 text-[13px] whitespace-nowrap">
                     {assignedName ? (
                       <span className="text-[#0F172A]">{assignedName}</span>
+                    ) : statusNormalized === "ASSIGNED" ? (
+                      <span className="text-[#94A3B8]">—</span>
                     ) : (
                       <span className="text-[#94A3B8]">unassigned</span>
                     )}

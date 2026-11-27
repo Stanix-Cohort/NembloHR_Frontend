@@ -28,22 +28,24 @@ function StatCards({ totalCount = 0, activeCount = 0, inactiveCount = 0 }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
       {cards.map(({ id, label, value, iconSrc, iconAlt }) => (
         <div
           key={id}
-          className="bg-white border border-[#E2E8F0] rounded-[12px] px-6 py-5 flex items-center gap-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+          className={`bg-white border border-[#E2E8F0] rounded-[12px] px-3.5 py-3.5 sm:px-6 sm:py-5 flex items-center gap-2.5 sm:gap-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] ${
+            id === 'total' ? 'col-span-2 md:col-span-1' : ''
+          }`}
         >
           <img
             src={iconSrc}
             alt={iconAlt}
-            className="w-12 h-12 rounded-full object-contain shrink-0 select-none"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-contain shrink-0 select-none"
           />
-          <div>
-            <p className="text-[20px] font-bold text-[#0F172A] leading-tight">
+          <div className="min-w-0">
+            <p className="text-[18px] sm:text-[20px] font-bold text-[#0F172A] leading-tight">
               {value}
             </p>
-            <p className="text-[12px] font-normal text-[#475569] mt-0.5">
+            <p className="text-[12px] font-normal text-[#475569] mt-0.5 leading-snug">
               {label}
             </p>
           </div>
