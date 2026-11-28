@@ -4,10 +4,10 @@ import hrIllustration from '../../assets/hr-illustration.png';
 
 const FEATURE_HIGHLIGHTS = [
   {
-    id: 'employees',
+    id: 'portal',
     Icon: Users,
-    line1: 'Manage',
-    line2: 'Employees',
+    line1: 'Streamline',
+    line2: 'HR Tasks',
   },
   {
     id: 'attendance',
@@ -18,7 +18,7 @@ const FEATURE_HIGHLIGHTS = [
   {
     id: 'leave-assets',
     Icon: ShieldCheck,
-    line1: 'Oversee',
+    line1: 'Manage',
     line2: 'Leave & Assets',
   },
 ];
@@ -49,12 +49,11 @@ function WelcomePanel({
         {/* Heading & Description */}
         <div className="mt-10 sm:mt-12 xl:mt-[72px]">
           <h1 className="text-[38px] sm:text-[48px] xl:text-[56px] leading-[1.12] font-bold tracking-[-0.025em] text-[#171E29]">
-            Welcome Back,
-            <br />
-            Admin!
+            Welcome Back!
           </h1>
-          <p className="mt-5 xl:mt-6 max-w-[430px] text-[18px] sm:text-[20px] xl:text-[22px] leading-[1.35] font-normal text-[#1E2530]">
-            Access your HR dashboard and manage your organization with ease.
+          <p className="mt-5 xl:mt-6 max-w-[440px] text-[18px] sm:text-[20px] xl:text-[22px] leading-[1.35] font-normal text-[#1E2530]">
+            Access your HR portal to manage attendance, leave, and assets with
+            ease.
           </p>
         </div>
 

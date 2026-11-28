@@ -25,7 +25,7 @@ function LoginForm({ onSubmit, isLoading = false, error = "" }) {
 
   return (
     <section
-      aria-label="Admin Login Form"
+      aria-label="Login Form"
       className="w-full lg:w-1/2 bg-white flex items-center justify-center px-6 py-12 sm:px-12 lg:px-12 xl:px-[72px]"
     >
       <div className="w-full max-w-[576px]">
@@ -40,7 +40,7 @@ function LoginForm({ onSubmit, isLoading = false, error = "" }) {
         )}
         <div>
           <h2 className="text-[32px] sm:text-[38px] xl:text-[42px] leading-[1.15] font-bold tracking-[-0.02em] text-[#171E29]">
-            Admin Login
+            Portal Login
           </h2>
 
           <p className="mt-3 text-[17px] sm:text-[19px] xl:text-[21px] leading-[1.4] font-normal text-[#1E2530]">
@@ -203,7 +203,7 @@ function LoginForm({ onSubmit, isLoading = false, error = "" }) {
             onClick={(e) => e.preventDefault()}
             className="hover:underline"
           >
-            Term
+            Terms
           </a>
         </footer>
       </div>
