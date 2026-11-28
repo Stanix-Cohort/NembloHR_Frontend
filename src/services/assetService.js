@@ -127,3 +127,12 @@ export async function updateAsset(assetId, assetPayload) {
 
   return response.data?.data ?? response.data;
 }
+
+export async function getMyAssets() {
+  const response = await apiClient.get("/assets/me");
+  const payload = response.data?.data ?? response.data;
+
+  if (Array.isArray(payload)) return payload;
+
+  return payload?.assets ?? payload?.items ?? payload?.records ?? [];
+}

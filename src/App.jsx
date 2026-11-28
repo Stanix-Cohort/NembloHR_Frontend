@@ -16,6 +16,7 @@ import RetrieveAsset from "./pages/RetrieveAsset";
 import AssetDetails from "./pages/AssetDetails";
 import EditAsset from "./pages/EditAsset"; 
 import AdminOverview from "./pages/AdminOverview";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 
 function App() {
   return (
@@ -39,21 +40,22 @@ function App() {
 
         <Route
           path="/dashboard"
-          element={<Navigate to="/admin/employees" replace />}
+          element={<Navigate to="/admin/dashboard" replace />}
         />
       </Route>
 
         {/* Protected Employee routes */}
         <Route element={<ProtectedRoute allowedRoles={["EMPLOYEE"]} />}>
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
           <Route path="/employee/assets" element={<EmployeeAssets />} />
 
           <Route
             path="/employee/dashboard"
             element={
               <EmployeePortal
-                activeRoute="home"
-                sectionLabel="Home"
-                pageTitle="Home"
+                activeRoute="dashboard"
+                sectionLabel="Dashboard"
+                pageTitle="Dashboard"
               />
             }
           />

@@ -6,7 +6,7 @@ import { getApiErrorMessage } from "../utils/apiError";
 
 function getPostResetDestination(role) {
   if (role === "ADMIN") return "/admin/dashboard";
-  if (role === "EMPLOYEE") return "/employee/assets";
+  if (role === "EMPLOYEE") return "/employee/dashboard";
   return "/unauthorized";
 }
 

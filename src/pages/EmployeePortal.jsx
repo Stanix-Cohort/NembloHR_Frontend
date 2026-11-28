@@ -7,9 +7,9 @@ import { EMPLOYEE_NAV_ITEMS } from "../constants/employeeNav";
 import { useAuth } from "../context/auth-context";
 
 function EmployeePortal({
-  activeRoute = "home",
-  sectionLabel = "Home",
-  pageTitle = "Home",
+  activeRoute = "dashboard",
+  sectionLabel = "Dashboard",
+  pageTitle = "Dashboard",
 }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
