@@ -80,3 +80,50 @@ export async function returnAsset(assetId) {
 
   return response.data?.data ?? response.data;
 }
+
+export async function updateAsset(assetId, assetPayload) {
+  const hasFiles = Boolean(assetPayload.image || assetPayload.file);
+
+  if (!hasFiles) {
+    const response = await apiClient.patch(`/assets/${assetId}`, assetPayload);
+    return response.data?.data ?? response.data;
+  }
+
+  const formData = new FormData();
+
+  if (assetPayload.assetId !== undefined) {
+    formData.append("assetId", assetPayload.assetId);
+  }
+  if (assetPayload.name !== undefined) {
+    formData.append("name", assetPayload.name);
+  }
+  if (assetPayload.type !== undefined) {
+    formData.append("type", assetPayload.type);
+  }
+  if (assetPayload.serialNumber !== undefined) {
+    formData.append("serialNumber", assetPayload.serialNumber);
+  }
+  if (assetPayload.condition !== undefined) {
+    formData.append("condition", assetPayload.condition);
+  }
+  if (assetPayload.status !== undefined) {
+    formData.append("status", assetPayload.status);
+  }
+  if (assetPayload.description !== undefined) {
+    formData.append("description", assetPayload.description);
+  }
+  if (assetPayload.image) {
+    formData.append("image", assetPayload.image);
+  }
+  if (assetPayload.file) {
+    formData.append("file", assetPayload.file);
+  }
+
+  const response = await apiClient.patch(`/assets/${assetId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data?.data ?? response.data;
+}

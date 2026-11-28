@@ -14,6 +14,7 @@ import ToastProvider from "./components/common/ToastProvider";
 import AssignAsset from "./pages/AssignAsset";
 import RetrieveAsset from "./pages/RetrieveAsset";
 import AssetDetails from "./pages/AssetDetails";
+import EditAsset from "./pages/EditAsset"; 
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/admin/assets" element={<AdminAssets />} />
         <Route path="/admin/assets/new" element={<CreateAsset />} />
         <Route path="/admin/assets/:id" element={<AssetDetails />} />
+        <Route path="/admin/assets/:id/edit" element={<EditAsset />} />
         <Route path="/admin/assets/:id/assign" element={<AssignAsset />} />
         <Route path="/admin/assets/:id/retrieve" element={<RetrieveAsset />} />
 

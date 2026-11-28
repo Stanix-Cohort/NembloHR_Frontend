@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
 import {
   Briefcase,
   Calendar,
@@ -247,8 +246,9 @@ function AssetDetails() {
   };
 
   const handleEdit = () => {
-    // TODO: Navigate to /admin/assets/:id/edit once Edit Asset page is added
-    toast.info("Edit Asset screen is not added yet.");
+    navigate(`/admin/assets/${asset.id}/edit`, {
+      state: { asset },
+    });
   };
 
   const normalizedStatus = String(asset?.status || "").toUpperCase();

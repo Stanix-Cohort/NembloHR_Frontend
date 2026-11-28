@@ -239,6 +239,11 @@ function AdminAssets() {
                       state: { asset },
                     })
                   }
+                  onEditAsset={(asset) =>
+                    navigate(`/admin/assets/${asset.id}/edit`, {
+                      state: { asset },
+                    })
+                  }
                   onAssignAsset={(asset) =>
                     navigate(`/admin/assets/${asset.id}/assign`, {
                       state: { asset },
