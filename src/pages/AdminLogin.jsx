@@ -25,7 +25,7 @@ function AdminLogin() {
       }
 
       if (user.role === "ADMIN") {
-        navigate("/admin/employees", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
         return;
       }
 

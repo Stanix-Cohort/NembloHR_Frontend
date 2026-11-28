@@ -197,7 +197,7 @@ function AdminDashboard() {
       <Sidebar
         activeRoute={activeRoute}
         onNavigate={(item) => {
-          if (item.id === "employees" || item.id === "assets") {
+          if (item.id === "dashboard" || item.id === "employees" || item.id === "assets") {
             navigate(item.path);
             return;
           }

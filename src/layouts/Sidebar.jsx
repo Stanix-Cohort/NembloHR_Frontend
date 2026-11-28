@@ -1,22 +1,44 @@
 import {
-  Contact,
-  Users,
-  CalendarCheck,
-  Briefcase,
+  Box,
+  CalendarDays,
+  LayoutGrid,
   LogOut,
+  Plane,
+  Users,
   X,
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { id: "employees", label: "Employees", path: "/admin/employees", Icon: Contact },
-  { id: "attendance", label: "Attendance", path: "/admin/attendance", Icon: Users },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    path: "/admin/dashboard",
+    Icon: LayoutGrid,
+  },
+  {
+    id: "employees",
+    label: "Employees",
+    path: "/admin/employees",
+    Icon: Users,
+  },
+  {
+    id: "attendance",
+    label: "Attendance",
+    path: "/admin/attendance",
+    Icon: CalendarDays,
+  },
+  {
+    id: "assets",
+    label: "Assets",
+    path: "/admin/assets",
+    Icon: Box,
+  },
   {
     id: "leave-management",
     label: "Leave Management",
     path: "/admin/leave-management",
-    Icon: CalendarCheck,
+    Icon: Plane,
   },
-  { id: "assets", label: "Assets", path: "/admin/assets", Icon: Briefcase },
 ];
 
 function AdminAvatar() {
@@ -130,7 +152,7 @@ function Sidebar({
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 space-y-1.5">
+        <nav className="flex-1 space-y-2">
           {navItems.map((item) => {
             const { id, label, path, Icon } = item;
             const isActive = activeRoute === id;
@@ -150,7 +172,7 @@ function Sidebar({
                     handleNavClick(item);
                   }}
                   aria-current={isActive ? "page" : undefined}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[8px] text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                     isActive
                       ? "bg-[#7A8896] text-white"
                       : "text-[#E2E8F0] hover:bg-white/10 hover:text-white"

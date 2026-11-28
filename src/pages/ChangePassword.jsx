@@ -5,7 +5,7 @@ import { useAuth } from "../context/auth-context";
 import { getApiErrorMessage } from "../utils/apiError";
 
 function getPostResetDestination(role) {
-  if (role === "ADMIN") return "/admin/employees";
+  if (role === "ADMIN") return "/admin/dashboard";
   if (role === "EMPLOYEE") return "/employee/assets";
   return "/unauthorized";
 }

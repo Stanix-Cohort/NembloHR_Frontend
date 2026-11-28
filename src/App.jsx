@@ -15,6 +15,7 @@ import AssignAsset from "./pages/AssignAsset";
 import RetrieveAsset from "./pages/RetrieveAsset";
 import AssetDetails from "./pages/AssetDetails";
 import EditAsset from "./pages/EditAsset"; 
+import AdminOverview from "./pages/AdminOverview";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
 
     {/* Protected Admin routes */}
       <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+        <Route path="/admin/dashboard" element={<AdminOverview />} />
         <Route path="/admin/employees" element={<AdminDashboard />} />
         <Route path="/admin/employees/new" element={<CreateEmployee />} />
         <Route path="/admin/employees/:id/edit" element={<EditEmployee />} />

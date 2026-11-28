@@ -240,7 +240,7 @@ function AssetDetails() {
   };
 
   const handleSidebarNavigate = (item) => {
-    if (item.id === "employees" || item.id === "assets") {
+    if (item.id === "dashboard" || item.id === "employees" || item.id === "assets") {
       navigate(item.path);
     }
   };
