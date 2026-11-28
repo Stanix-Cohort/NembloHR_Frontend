@@ -17,6 +17,7 @@ import AssetDetails from "./pages/AssetDetails";
 import EditAsset from "./pages/EditAsset"; 
 import AdminOverview from "./pages/AdminOverview";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
+import EmployeeAssetFeedback from "./pages/EmployeeAssetFeedback";
 
 function App() {
   return (
@@ -48,6 +49,10 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["EMPLOYEE"]} />}>
           <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
           <Route path="/employee/assets" element={<EmployeeAssets />} />
+          <Route
+          path="/employee/assets/:id/feedback"
+          element={<EmployeeAssetFeedback />}
+          />
 
           <Route
             path="/employee/dashboard"

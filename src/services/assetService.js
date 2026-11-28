@@ -136,3 +136,12 @@ export async function getMyAssets() {
 
   return payload?.assets ?? payload?.items ?? payload?.records ?? [];
 }
+
+export async function submitAssetFeedback(assetId, { condition, comment }) {
+  const response = await apiClient.post(`/assets/${assetId}/feedback`, {
+    condition,
+    comment,
+  });
+
+  return response.data?.data ?? response.data;
+}
