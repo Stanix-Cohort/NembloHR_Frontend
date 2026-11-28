@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -9,7 +9,9 @@ import {
   ChevronLeft,
   Copy,
   LoaderCircle,
+  Search,
   UserCheck,
+  X,
 } from "lucide-react";
 
 import Sidebar from "../layouts/Sidebar";
@@ -45,6 +47,32 @@ function formatDate(dateString) {
     day: "numeric",
     year: "numeric",
   }).format(parsed);
+}
+
+function getEmployeeDisplayName(emp) {
+  if (!emp) return "";
+  return (
+    emp.fullName ||
+    `${emp.firstName || ""} ${emp.lastName || ""}`.trim() ||
+    emp.workEmail ||
+    emp.username ||
+    ""
+  );
+}
+
+function filterActiveEmployees(data) {
+  const list = Array.isArray(data)
+    ? data
+    : data?.employees ?? data?.items ?? data?.records ?? [];
+
+  return list.filter(
+    (emp) =>
+      String(
+        emp.employmentStatus ??
+          emp.status ??
+          (emp.isActive === false ? "inactive" : "active"),
+      ).toLowerCase() === "active",
+  );
 }
 
 function AssetStatusPill({ status }) {
@@ -99,7 +127,10 @@ function EmployeeSelect({
   value = "",
   onChange,
   employees = [],
+  searchQuery = "",
+  onSearchChange,
   loading = false,
+  searching = false,
   disabled = false,
   hasError = false,
 }) {
@@ -115,12 +146,14 @@ function EmployeeSelect({
         !containerRef.current.contains(event.target)
       ) {
         setIsOpen(false);
+        onSearchChange?.("");
       }
     };
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         setIsOpen(false);
+        onSearchChange?.("");
       }
     };
 
@@ -131,15 +164,30 @@ function EmployeeSelect({
       document.removeEventListener("mousedown", handleOutsideClick);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onSearchChange]);
+
+  const filteredEmployees = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return employees;
+
+    return employees.filter((emp) => {
+      const searchable = [
+        getEmployeeDisplayName(emp),
+        emp.workEmail,
+        emp.email,
+        emp.department?.name,
+        emp.departmentName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+  }, [employees, searchQuery]);
 
   const selectedEmployee = employees.find((emp) => emp.id === value);
-  const selectedLabel = selectedEmployee
-    ? selectedEmployee.fullName ||
-      `${selectedEmployee.firstName || ""} ${selectedEmployee.lastName || ""}`.trim() ||
-      selectedEmployee.workEmail ||
-      selectedEmployee.username
-    : "";
+  const selectedLabel = getEmployeeDisplayName(selectedEmployee);
 
   const triggerLabel = loading
     ? "Loading employees..."
@@ -154,7 +202,12 @@ function EmployeeSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-invalid={hasError}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          setIsOpen((prev) => {
+            if (prev) onSearchChange?.("");
+            return !prev;
+          });
+        }}
         className={`w-full h-[46px] pl-4 pr-10 rounded-[8px] border bg-white text-[14px] text-left flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 disabled:opacity-60 disabled:cursor-not-allowed ${
           hasError
             ? "border-[#DC2626] focus:ring-[#DC2626]/20 focus:border-[#DC2626]"
@@ -172,23 +225,63 @@ function EmployeeSelect({
       </button>
 
       {isOpen && (
-        <div
-          role="listbox"
-          aria-labelledby={id}
-          className="absolute right-0 left-0 mt-1.5 z-30 bg-white border border-[#E2E8F0] rounded-[10px] shadow-[0_8px_24px_rgba(15,23,42,0.08)] overflow-hidden"
-        >
-          <div className="max-h-[220px] overflow-y-auto divide-y divide-[#E2E8F0]">
-            {employees.length === 0 ? (
-              <p className="px-4 py-2.5 text-[13px] text-[#64748B]">
-                No active employees found
+        <div className="absolute right-0 left-0 mt-1.5 z-30 bg-white border border-[#E2E8F0] rounded-[10px] shadow-[0_8px_24px_rgba(15,23,42,0.08)] overflow-hidden">
+          {/* Search Input inside Dropdown */}
+          <div className="p-2.5 border-b border-[#E2E8F0] bg-white">
+            <div className="relative">
+              <Search
+                className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                strokeWidth={1.75}
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="Search by name or email..."
+                aria-label="Search employees"
+                className="w-full h-[38px] pl-9 pr-8 rounded-[6px] border border-[#CBD5E1] bg-[#F8FAFC] text-[13px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#1E3247]/20 focus:border-[#1E3247] focus:bg-white"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.("")}
+                  aria-label="Clear employee search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] p-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" strokeWidth={2} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Options List */}
+          <div
+            role="listbox"
+            aria-labelledby={id}
+            className="max-h-[220px] overflow-y-auto divide-y divide-[#E2E8F0]"
+          >
+            {searching ? (
+              <div className="px-4 py-3 flex items-center gap-2 text-[13px] text-[#64748B]">
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+                <span>Searching employees...</span>
+              </div>
+            ) : filteredEmployees.length === 0 ? (
+              <p className="px-4 py-3 text-[13px] text-[#64748B]">
+                {searchQuery.trim()
+                  ? "No matching employees found"
+                  : "No active employees found"}
               </p>
             ) : (
-              employees.map((emp) => {
-                const label =
-                  emp.fullName ||
-                  `${emp.firstName || ""} ${emp.lastName || ""}`.trim() ||
-                  emp.workEmail ||
-                  emp.username;
+              filteredEmployees.map((emp) => {
+                const label = getEmployeeDisplayName(emp);
+                const subtext = [
+                  emp.workEmail || emp.email,
+                  emp.department?.name || emp.departmentName,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
                 const isSelected = emp.id === value;
 
                 return (
@@ -199,15 +292,30 @@ function EmployeeSelect({
                     aria-selected={isSelected}
                     onClick={() => {
                       onChange?.(emp.id);
+                      onSearchChange?.("");
                       setIsOpen(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-[13px] text-left flex items-center justify-between cursor-pointer hover:bg-[#F8FAFC] ${
-                      isSelected
-                        ? "bg-[#F1F5F9] font-medium text-[#0F172A]"
-                        : "text-[#0F172A]"
+                    className={`w-full px-4 py-2.5 text-left flex items-center justify-between gap-3 cursor-pointer hover:bg-[#F8FAFC] ${
+                      isSelected ? "bg-[#F1F5F9]" : ""
                     }`}
                   >
-                    <span className="truncate">{label}</span>
+                    <div className="min-w-0">
+                      <p
+                        className={`text-[13px] truncate ${
+                          isSelected
+                            ? "font-semibold text-[#0F172A]"
+                            : "font-medium text-[#0F172A]"
+                        }`}
+                      >
+                        {label}
+                      </p>
+                      {subtext && (
+                        <p className="text-[11px] text-[#64748B] truncate mt-0.5">
+                          {subtext}
+                        </p>
+                      )}
+                    </div>
+
                     {isSelected && (
                       <Check
                         className="w-4 h-4 text-[#1E3247] shrink-0"
@@ -241,6 +349,10 @@ function AssignAsset() {
 
   const [employees, setEmployees] = useState([]);
   const [employeesLoading, setEmployeesLoading] = useState(true);
+  const [hasMoreEmployees, setHasMoreEmployees] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [isSearchingEmployees, setIsSearchingEmployees] = useState(false);
+
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -283,18 +395,12 @@ function AssignAsset() {
     getEmployees({ status: "active", page: 1, limit: 100 })
       .then((data) => {
         if (!isMounted) return;
-        const list = Array.isArray(data)
-          ? data
-          : data?.employees ?? data?.items ?? data?.records ?? [];
-        const activeOnly = list.filter(
-          (emp) =>
-            String(
-              emp.employmentStatus ??
-                emp.status ??
-                (emp.isActive === false ? "inactive" : "active"),
-            ).toLowerCase() === "active",
-        );
+        const activeOnly = filterActiveEmployees(data);
+        const total =
+          data?.pagination?.total ?? data?.total ?? activeOnly.length;
+
         setEmployees(activeOnly);
+        setHasMoreEmployees(total > activeOnly.length);
       })
       .catch(() => {
         // Leave dropdown empty gracefully on error
@@ -307,6 +413,42 @@ function AssignAsset() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const query = employeeSearch.trim();
+    if (!hasMoreEmployees || !query) return;
+
+    let isMounted = true;
+
+    const timer = setTimeout(() => {
+      setIsSearchingEmployees(true);
+
+      getEmployees({ status: "active", search: query, page: 1, limit: 100 })
+        .then((data) => {
+          if (!isMounted) return;
+          const matches = filterActiveEmployees(data);
+
+          setEmployees((prev) => {
+            const merged = new Map(prev.map((emp) => [emp.id, emp]));
+            for (const emp of matches) {
+              merged.set(emp.id, emp);
+            }
+            return Array.from(merged.values());
+          });
+        })
+        .catch(() => {
+          // Keep existing in-memory matches on error
+        })
+        .finally(() => {
+          if (isMounted) setIsSearchingEmployees(false);
+        });
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [employeeSearch, hasMoreEmployees]);
 
   const handleBack = () => {
     navigate("/admin/assets");
@@ -342,12 +484,7 @@ function AssignAsset() {
       const selectedEmp = employees.find(
         (emp) => emp.id === selectedEmployeeId,
       );
-      const employeeName =
-        selectedEmp?.fullName ||
-        `${selectedEmp?.firstName || ""} ${selectedEmp?.lastName || ""}`.trim() ||
-        selectedEmp?.workEmail ||
-        selectedEmp?.username ||
-        "—";
+      const employeeName = getEmployeeDisplayName(selectedEmp) || "—";
       const departmentName =
         selectedEmp?.department?.name || selectedEmp?.departmentName || "—";
 
@@ -545,7 +682,10 @@ function AssignAsset() {
                         if (validationError) setValidationError("");
                       }}
                       employees={employees}
+                      searchQuery={employeeSearch}
+                      onSearchChange={setEmployeeSearch}
                       loading={employeesLoading}
+                      searching={isSearchingEmployees}
                       disabled={isSubmitting}
                       hasError={Boolean(validationError)}
                     />
