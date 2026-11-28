@@ -234,6 +234,11 @@ function AdminAssets() {
                   currentPage={currentPage}
                   pageSize={PAGE_SIZE}
                   onPageChange={setCurrentPage}
+                  onViewAsset={(asset) =>
+                    navigate(`/admin/assets/${asset.id}`, {
+                      state: { asset },
+                    })
+                  }
                   onAssignAsset={(asset) =>
                     navigate(`/admin/assets/${asset.id}/assign`, {
                       state: { asset },

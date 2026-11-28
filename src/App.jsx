@@ -13,6 +13,7 @@ import CreateAsset from "./pages/CreateAsset";
 import ToastProvider from "./components/common/ToastProvider";
 import AssignAsset from "./pages/AssignAsset";
 import RetrieveAsset from "./pages/RetrieveAsset";
+import AssetDetails from "./pages/AssetDetails";
 
 function App() {
   return (
@@ -21,7 +22,6 @@ function App() {
         {/* Public routes */}
         <Route path="/login" element={<AdminLogin />} />
 
-        {/* Protected Admin routes */}
     {/* Protected Admin routes */}
       <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
         <Route path="/admin/employees" element={<AdminDashboard />} />
@@ -29,6 +29,7 @@ function App() {
         <Route path="/admin/employees/:id/edit" element={<EditEmployee />} />
         <Route path="/admin/assets" element={<AdminAssets />} />
         <Route path="/admin/assets/new" element={<CreateAsset />} />
+        <Route path="/admin/assets/:id" element={<AssetDetails />} />
         <Route path="/admin/assets/:id/assign" element={<AssignAsset />} />
         <Route path="/admin/assets/:id/retrieve" element={<RetrieveAsset />} />
 

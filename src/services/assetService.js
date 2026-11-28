@@ -47,6 +47,26 @@ export async function getAssets(params = {}) {
   return payload?.assets ?? payload?.items ?? payload?.records ?? [];
 }
 
+export async function getAssetById(assetId) {
+  const response = await apiClient.get(`/assets/${assetId}`);
+  return response.data?.data ?? response.data;
+}
+
+export async function getAssetFeedback(params = {}) {
+  const response = await apiClient.get("/assets/feedback", { params });
+  const payload = response.data?.data ?? response.data;
+
+  if (Array.isArray(payload)) return payload;
+
+  return (
+    payload?.feedbacks ??
+    payload?.feedback ??
+    payload?.items ??
+    payload?.records ??
+    []
+  );
+}
+
 export async function assignAsset(assetId, employeeId) {
   const response = await apiClient.post(`/assets/${assetId}/assign`, {
     employeeId,
